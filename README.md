@@ -9,14 +9,26 @@ New to the field? Start with the [plain-language learning guide](LEARNING_GUIDE.
 
 ## Command line
 
-The CLI reads JSON and is behind the optional `json` feature (the library core has no dependencies):
+The CLI is behind the optional `json` feature (the library core has no dependencies); add `net` to fetch live forecasts.
 
 ```sh
-cargo run --features json -- --plan examples/plan.json --series examples/series.json
-cargo run --features json -- --plan examples/plan.json --series examples/series.json --json
+# a plan file and a series file (JSON or CSV)
+cargo run --features json -- --plan examples/plan.json --series examples/series.csv
+
+# a built-in starting-point plan on a live Open-Meteo forecast
+cargo run --features net -- --preset drone --hours 2 --open-meteo 52.52,13.41
+
+cargo run --features json -- --list-presets
 ```
 
-Options: `--top <n>`, `--rejected` (why each rejected window failed), `--json` (full machine-readable result). See [`examples/`](examples) for the input format: a series is `{cadence_ms, observations: [{timestamp_ms, values}]}` and a plan is `{name, stages: [{name, duration_ms, constraints}]}`. Hard constraints use `"comparison": "<" | "<=" | ">" | ">=" | "=="`; soft constraints take a `preference` of kind `minimize`, `maximize` or `range` (each with a `scale`) and an optional `weight` (default 1). JSON series go through the same validation as `Series::new`.
+Options: `--top <n>`, `--rejected` (why each rejected window failed), `--json` (full result). New here? Follow the [tutorial](docs/TUTORIAL.md). Input formats:
+
+- **Series JSON** `{cadence_ms, units?, observations: [{timestamp_ms, values}]}`, **series CSV** (see [`examples/series.csv`](examples/series.csv)), or a saved **Open-Meteo** response (`--format open-meteo`). All are validated and converted to canonical units.
+- **Plan JSON** `{name, stages: [{name, duration_ms, constraints}]}`; see [`examples/plan.json`](examples/plan.json). Hard constraints use `"comparison": "<" | "<=" | ">" | ">=" | "=="`; soft constraints take a `preference` (`minimize`, `maximize` or `range`, each with a `scale`) and an optional `weight` (default 1). Any constraint may add a `"unit"` for its limits.
+
+**Units.** Metrics from the shared vocabulary (`wind_speed`, `temperature`, `visibility`, ... see [`src/units.rs`](src/units.rs)) have one canonical unit each (SI-leaning: m/s, °C, mm, %, m, hPa). Adapters and unit fields convert to it; the engine itself never sees mixed units.
+
+**Presets** (`drone`, `outdoor-event`, `field-work`) are illustrative starting points, **not safety guidance**; check their limits against your own equipment and regulations.
 
 ## Quick example
 

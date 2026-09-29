@@ -124,3 +124,89 @@ fn json_unknown_units_are_errors() {
         "{bad_constraint}"
     );
 }
+
+fn run_cli(args: &[&str]) -> std::process::Output {
+    Command::new(env!("CARGO_BIN_EXE_env-operability"))
+        .args(args)
+        .output()
+        .unwrap()
+}
+
+#[test]
+fn cli_reads_csv_and_open_meteo_files_and_presets() {
+    let csv = run_cli(&[
+        "--plan",
+        "examples/plan.json",
+        "--series",
+        "examples/series.csv",
+        "--top",
+        "1",
+    ]);
+    assert!(
+        csv.status.success(),
+        "{}",
+        String::from_utf8_lossy(&csv.stderr)
+    );
+    let text = String::from_utf8(csv.stdout).unwrap();
+    assert!(text.contains("2 feasible, 2 rejected"), "{text}");
+    assert!(
+        text.contains("m/s"),
+        "values should show canonical units: {text}"
+    );
+
+    let om = run_cli(&[
+        "--preset",
+        "drone",
+        "--hours",
+        "1",
+        "--series",
+        "tests/fixtures/open_meteo_hourly.json",
+        "--format",
+        "open-meteo",
+        "--json",
+    ]);
+    assert!(
+        om.status.success(),
+        "{}",
+        String::from_utf8_lossy(&om.stderr)
+    );
+    let value: serde_json::Value = serde_json::from_slice(&om.stdout).unwrap();
+    // Hours 0 (gust 15 m/s) and 2 (0.2 mm rain) breach the drone limits; 1 and 3 pass.
+    let starts = |key: &str| -> Vec<i64> {
+        let mut v: Vec<i64> = value[key]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|w| w["start_ms"].as_i64().unwrap())
+            .collect();
+        v.sort();
+        v
+    };
+    assert_eq!(starts("feasible"), [1_790_067_600_000, 1_790_074_800_000]);
+    assert_eq!(starts("rejected"), [1_790_064_000_000, 1_790_071_200_000]);
+}
+
+#[test]
+fn cli_lists_presets_and_rejects_unknown_ones() {
+    let list = run_cli(&["--list-presets"]);
+    assert!(list.status.success());
+    assert!(String::from_utf8(list.stdout)
+        .unwrap()
+        .contains("outdoor-event"));
+    let unknown = run_cli(&["--preset", "nope", "--series", "examples/series.csv"]);
+    assert_eq!(unknown.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&unknown.stderr).contains("unknown preset `nope`"));
+}
+
+#[test]
+fn cli_reports_adapter_errors_with_location() {
+    let bad = run_cli(&[
+        "--preset",
+        "drone",
+        "--series",
+        "tests/fixtures/open_meteo_hourly.json",
+    ]);
+    // Parsed as the native JSON format, an Open-Meteo response is not a series.
+    assert_eq!(bad.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&bad.stderr).contains("invalid series"));
+}

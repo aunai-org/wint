@@ -199,12 +199,30 @@ fn hard_margin(c: Comparison, actual: f64, threshold: f64) -> f64 {
         Comparison::Equal => 0.0,
     }
 }
+/// Human-readable number: at most 4 decimals, trailing zeros trimmed.
+pub(crate) fn fmt_num(value: f64) -> String {
+    let text = format!("{value:.4}");
+    text.trim_end_matches('0').trim_end_matches('.').to_string()
+}
 fn format_preference(p: &Preference) -> String {
     match *p {
-        Preference::Minimize { ideal, scale } => format!("minimize: ideal {ideal}, scale {scale}"),
-        Preference::Maximize { ideal, scale } => format!("maximize: ideal {ideal}, scale {scale}"),
+        Preference::Minimize { ideal, scale } => format!(
+            "minimize: ideal {}, scale {}",
+            fmt_num(ideal),
+            fmt_num(scale)
+        ),
+        Preference::Maximize { ideal, scale } => format!(
+            "maximize: ideal {}, scale {}",
+            fmt_num(ideal),
+            fmt_num(scale)
+        ),
         Preference::Range { min, max, scale } => {
-            format!("range: {min}..={max}, scale {scale}")
+            format!(
+                "range: {}..={}, scale {}",
+                fmt_num(min),
+                fmt_num(max),
+                fmt_num(scale)
+            )
         }
     }
 }
@@ -216,7 +234,7 @@ fn format_comparison(c: Comparison, t: f64) -> String {
         Comparison::GreaterThanOrEqual => ">=",
         Comparison::Equal => "==",
     };
-    format!("{symbol} {t}")
+    format!("{symbol} {}", fmt_num(t))
 }
 fn preference_penalty(preference: &Preference, value: f64) -> f64 {
     let (deviation, scale) = match *preference {

@@ -42,7 +42,7 @@ Preference: Minimize { ideal, scale } | Maximize { ideal, scale } | Range { min,
 WindowResult { start_ms, end_ms, suitability, stages: [StageResult { name, start_ms, end_ms, suitability }], evidence }
 ```
 
-Metrics are opaque strings with units owned by the caller/adapter. A production schema layer will attach units, provenance, quality flags, and ensemble members rather than assuming meteorological names.
+Metrics are strings. The engine treats them as opaque and never sees units: it compares numbers. Alongside it, a shared **vocabulary** (`units::VOCABULARY`: `wind_speed`, `wind_gust`, `temperature`, `precipitation`, `precipitation_probability`, `cloud_cover`, `relative_humidity`, `visibility`, `wave_height`, `pressure`, `wind_direction`) fixes one canonical, SI-leaning unit per metric (m/s, °C, mm, %, m, hPa, °). Conversion happens only at the edges: `Series::with_units` / the series `units` JSON map for readings, and `Constraint::with_unit` / the constraint `unit` JSON field for limits (absolute values convert with offsets, a preference `scale` converts as a difference, so 18 °F of scale is 10 °C). Caller-defined metrics outside the vocabulary are allowed but are never converted, and attaching a unit to one is an error. Provenance, quality flags and ensemble members remain future work.
 
 ## Outputs, scoring, and explainability
 
@@ -67,7 +67,11 @@ src/
   lib.rs          public API
   model.rs        Series, observations, plans, constraint definitions
   engine.rs       candidate search, validation, evidence, ranking
-  main.rs         JSON CLI (requires the `json` feature)
+  units.rs        metric vocabulary, unit conversion
+  time.rs         ISO 8601 <-> Unix ms helpers
+  adapters/       csv (no deps), open_meteo (json feature): series from external data
+  presets.rs      illustrative starting-point plans
+  main.rs         CLI (requires the `json` feature; `net` adds live fetching)
 ```
 
 Key API: `Series::new(cadence_ms, observations) -> Result<Series, ValidationError>`, `Plan::single_stage(...)`, `Plan::new(...)`, and `WindowSearch::new(&series, &plan).run() -> Result<SearchResult, ValidationError>`. `run` validates the plan first (`Plan::validate`), so malformed plans are errors, never silent empty results.

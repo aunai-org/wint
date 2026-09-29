@@ -16,10 +16,13 @@ Guiding principle: get a trustworthy, explained answer from real data in minutes
 - [x] Per-stage breakdown in results; evidence reduced to the binding sample per constraint
 
 ## M2 - Real data
-- [ ] Open-Meteo and CSV adapters
-- [ ] Metric vocabulary with units and conversion
-- [ ] First preset plans (outdoor/drone), labelled as starting points, not safety advice
-- [ ] Tutorial using real forecast data
+- [x] Open-Meteo (parser + URL builder, CLI fetch behind `net`) and CSV adapters
+- [x] Metric vocabulary with units and conversion
+- [x] First preset plans (drone, outdoor-event, field-work), labelled as starting points, not safety advice
+- [x] Tutorial (docs/TUTORIAL.md)
+- [ ] Verify the live Open-Meteo fetch end to end (needs a network that can reach api.open-meteo.com)
+- [ ] Marine data (wave height) adapter, e.g. Open-Meteo Marine API
+- [ ] Review preset thresholds with domain practitioners
 
 ## M3 - Reach
 - [ ] WASM build and demo web app
