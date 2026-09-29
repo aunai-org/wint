@@ -1,4 +1,4 @@
-use crate::{Comparison, Constraint, Plan, Preference, Series};
+use crate::{Comparison, Constraint, Plan, Preference, Series, ValidationError};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Evidence {
@@ -36,13 +36,16 @@ impl<'a> WindowSearch<'a> {
     pub fn new(series: &'a Series, plan: &'a Plan) -> Self {
         Self { series, plan }
     }
-    pub fn run(&self) -> SearchResult {
-        let samples = match self.sample_count() {
-            Some(value) => value,
-            None => return SearchResult::default(),
-        };
+    /// Runs the search. Returns an error if the plan is invalid for this
+    /// series; a series shorter than the plan yields an empty result.
+    pub fn run(&self) -> Result<SearchResult, ValidationError> {
+        self.plan.validate(self.series.cadence_ms)?;
+        let samples = (self.plan.duration_ms() / self.series.cadence_ms) as usize;
         let mut result = SearchResult::default();
-        for start_index in 0..=self.series.observations.len().saturating_sub(samples) {
+        if samples > self.series.observations.len() {
+            return Ok(result);
+        }
+        for start_index in 0..=self.series.observations.len() - samples {
             let start_ms = self.series.observations[start_index].timestamp_ms;
             let end_ms = start_ms + self.plan.duration_ms();
             match self.evaluate(start_index) {
@@ -63,15 +66,7 @@ impl<'a> WindowSearch<'a> {
                 .total_cmp(&a.suitability)
                 .then(a.start_ms.cmp(&b.start_ms))
         });
-        result
-    }
-    fn sample_count(&self) -> Option<usize> {
-        let duration = self.plan.duration_ms();
-        if duration <= 0 || duration % self.series.cadence_ms != 0 {
-            None
-        } else {
-            Some((duration / self.series.cadence_ms) as usize)
-        }
+        Ok(result)
     }
     fn evaluate(&self, start: usize) -> Result<WindowResult, Box<Evidence>> {
         let mut evidence = Vec::new();
@@ -79,9 +74,6 @@ impl<'a> WindowSearch<'a> {
         let mut total_weight = 0.0;
         let mut offset = 0;
         for stage in &self.plan.stages {
-            if stage.duration_ms <= 0 || stage.duration_ms % self.series.cadence_ms != 0 {
-                return Err(Box::new(invalid_stage(stage)));
-            }
             let count = (stage.duration_ms / self.series.cadence_ms) as usize;
             for observation in &self.series.observations[start + offset..start + offset + count] {
                 for constraint in &stage.constraints {
@@ -147,17 +139,6 @@ impl<'a> WindowSearch<'a> {
         })
     }
 }
-fn invalid_stage(stage: &crate::Stage) -> Evidence {
-    Evidence {
-        stage: stage.name.clone(),
-        constraint: "stage duration".into(),
-        timestamp_ms: 0,
-        metric: String::new(),
-        actual: None,
-        expected: "positive cadence multiple".into(),
-        passed: false,
-    }
-}
 fn format_comparison(c: Comparison, t: f64) -> String {
     let symbol = match c {
         Comparison::LessThan => "<",
@@ -169,24 +150,12 @@ fn format_comparison(c: Comparison, t: f64) -> String {
     format!("{symbol} {t}")
 }
 fn preference_penalty(preference: &Preference, value: f64) -> f64 {
-    match *preference {
-        Preference::Minimize { ideal } => {
-            ((value - ideal).max(0.0) / ideal.abs().max(1.0)).min(1.0)
-        }
-        Preference::Maximize { ideal } => {
-            ((ideal - value).max(0.0) / ideal.abs().max(1.0)).min(1.0)
-        }
-        Preference::Range { min, max } => {
-            let scale = (max - min).abs().max(1.0);
-            if value < min {
-                ((min - value) / scale).min(1.0)
-            } else if value > max {
-                ((value - max) / scale).min(1.0)
-            } else {
-                0.0
-            }
-        }
-    }
+    let (deviation, scale) = match *preference {
+        Preference::Minimize { ideal, scale } => ((value - ideal).max(0.0), scale),
+        Preference::Maximize { ideal, scale } => ((ideal - value).max(0.0), scale),
+        Preference::Range { min, max, scale } => ((min - value).max(value - max).max(0.0), scale),
+    };
+    (deviation / scale).min(1.0)
 }
 
 #[cfg(test)]
@@ -216,7 +185,7 @@ mod tests {
                 10.0,
             )],
         );
-        let found = WindowSearch::new(&series(), &plan).run();
+        let found = WindowSearch::new(&series(), &plan).run().unwrap();
         assert_eq!(found.feasible.len(), 0);
         assert_eq!(found.rejected.len(), 2);
     }
@@ -247,7 +216,7 @@ mod tests {
                 ),
             ],
         );
-        let found = WindowSearch::new(&series(), &plan).run();
+        let found = WindowSearch::new(&series(), &plan).run().unwrap();
         assert_eq!(found.rejected[0].failure.stage, "work");
     }
     #[test]
@@ -258,13 +227,81 @@ mod tests {
             vec![Constraint::soft(
                 "calm",
                 Metric::new("wind"),
-                Preference::Minimize { ideal: 0.0 },
+                Preference::Minimize {
+                    ideal: 0.0,
+                    scale: 20.0,
+                },
                 1.0,
             )],
         );
-        let found = WindowSearch::new(&series(), &plan).run();
+        let found = WindowSearch::new(&series(), &plan).run().unwrap();
         assert_eq!(found.feasible[0].start_ms, 2);
         assert!(found.feasible[0].suitability > found.feasible[1].suitability);
+    }
+    fn soft_plan(preference: Preference) -> Plan {
+        Plan::single_stage(
+            "p",
+            1,
+            vec![Constraint::soft("c", Metric::new("wind"), preference, 1.0)],
+        )
+    }
+    #[test]
+    fn scale_sets_the_full_penalty_distance() {
+        let p = Preference::Minimize {
+            ideal: 10.0,
+            scale: 20.0,
+        };
+        assert_eq!(preference_penalty(&p, 10.0), 0.0);
+        assert_eq!(preference_penalty(&p, 5.0), 0.0);
+        assert_eq!(preference_penalty(&p, 20.0), 0.5);
+        assert_eq!(preference_penalty(&p, 100.0), 1.0);
+        let m = Preference::Maximize {
+            ideal: 10.0,
+            scale: 5.0,
+        };
+        assert_eq!(preference_penalty(&m, 7.5), 0.5);
+        let r = Preference::Range {
+            min: 10.0,
+            max: 20.0,
+            scale: 10.0,
+        };
+        assert_eq!(preference_penalty(&r, 15.0), 0.0);
+        assert_eq!(preference_penalty(&r, 25.0), 0.5);
+        assert_eq!(preference_penalty(&r, 0.0), 1.0);
+    }
+    #[test]
+    fn invalid_plans_are_errors() {
+        let s = series();
+        let empty = Plan::new("e", vec![]);
+        assert_eq!(
+            WindowSearch::new(&s, &empty).run(),
+            Err(ValidationError::EmptyPlan)
+        );
+        let zero = Plan::single_stage("z", 0, vec![]);
+        assert!(matches!(
+            WindowSearch::new(&s, &zero).run(),
+            Err(ValidationError::InvalidStageDuration { .. })
+        ));
+        let bad_scale = soft_plan(Preference::Minimize {
+            ideal: 0.0,
+            scale: 0.0,
+        });
+        assert!(matches!(
+            WindowSearch::new(&s, &bad_scale).run(),
+            Err(ValidationError::InvalidConstraint { .. })
+        ));
+        let bad_range = soft_plan(Preference::Range {
+            min: 2.0,
+            max: 1.0,
+            scale: 1.0,
+        });
+        assert!(WindowSearch::new(&s, &bad_range).run().is_err());
+    }
+    #[test]
+    fn plan_longer_than_series_yields_empty_result() {
+        let plan = Plan::single_stage("long", 10, vec![]);
+        let found = WindowSearch::new(&series(), &plan).run().unwrap();
+        assert!(found.feasible.is_empty() && found.rejected.is_empty());
     }
     #[test]
     fn rejects_irregular_series() {

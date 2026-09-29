@@ -121,6 +121,8 @@ A **weight** says how important one preference is compared with another. A prefe
 
 An **ideal** is the best target for minimize/maximize. The engine converts distance from the ideal into a penalty between 0 and 1. A range has zero penalty while the value stays inside the range; penalty grows outside it.
 
+Every preference also has a **scale**: the distance from the ideal that counts as the worst possible result. For example, `Minimize { ideal: 10.0, scale: 20.0 }` for wind gives 10 km/h a penalty of 0, 20 km/h a penalty of 0.5, and 30 km/h or more a penalty of 1. You choose the scale, so it always makes sense in your metric's unit.
+
 ## Results: how the engine answers
 
 ### Feasible window

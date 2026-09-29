@@ -22,8 +22,11 @@ let plan = Plan::single_stage("field-work", 7_200_000, vec![
     Constraint::hard("low rain chance", Metric::new("rain_probability"), Comparison::LessThan, 20.0),
 ]);
 
-let result = WindowSearch::new(&series, &plan).run();
-assert_eq!(result.feasible.len(), 1);
+let result = WindowSearch::new(&series, &plan).run().unwrap();
+// Windows starting at 0h and 1h both satisfy every limit.
+assert_eq!(result.feasible.len(), 2);
 ```
+
+`run()` returns an error if the plan is invalid for the series (empty plan, misaligned stage durations, malformed constraints).
 
 Timestamps and durations are signed Unix milliseconds. All ranges are half-open: `[start, end)`.

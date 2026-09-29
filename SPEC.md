@@ -24,7 +24,7 @@ Examples: a drone team requires two safe flight hours followed by one recovery h
 - **Plan**: ordered, contiguous stages. The operation duration is the sum of stage durations.
 - **Candidate window**: a half-open interval `[start, end)` beginning at an observation timestamp. A stage covers a contiguous subinterval.
 - **Hard constraint**: every sample in its stage must provide the metric and satisfy its comparison. A failed/missing value rejects the candidate.
-- **Soft constraint**: an ideal value/range with a non-negative weight. Each relevant sample contributes a normalized penalty; final suitability is `1 - weighted_mean(penalty)`.
+- **Soft constraint**: an ideal value/range with a non-negative weight. Each relevant sample contributes a penalty `min(deviation / scale, 1)`, where `scale` is the caller-declared deviation that counts as a full penalty (positive, in the metric's unit); final suitability is `1 - weighted_mean(penalty)`.
 - **Temporal constraint**: an explicit relationship between stages/intervals, such as `Before`, `After`, or a permitted gap. Adjacent stages in v0.1 are inherently `before/after`; richer named temporal predicates are planned for v0.2.
 - **Contiguous duration**: all samples whose timestamps fall in the interval must satisfy applicable constraints. A candidate is only considered when the full duration is covered by the series.
 - **Staged operation**: sequential stages with independently declared limits. No idle gaps exist in v0.1.
@@ -38,6 +38,7 @@ Series { cadence_ms, observations: [Observation { timestamp_ms, values }] }
 Plan { name, stages: [Stage { name, duration_ms, hard, soft }] }
 HardConstraint { name, metric, comparison, threshold }
 SoftConstraint { name, metric, preference, weight }
+Preference: Minimize { ideal, scale } | Maximize { ideal, scale } | Range { min, max, scale }
 WindowResult { start_ms, end_ms, suitability, stages, evidence }
 ```
 
@@ -69,7 +70,7 @@ src/
   main.rs         intentionally small CLI placeholder
 ```
 
-Key API: `Series::new(cadence_ms, observations) -> Result<Series, ValidationError>`, `Plan::single_stage(...)`, `Plan::new(...)`, and `WindowSearch::new(&series, &plan).run() -> SearchResult`.
+Key API: `Series::new(cadence_ms, observations) -> Result<Series, ValidationError>`, `Plan::single_stage(...)`, `Plan::new(...)`, and `WindowSearch::new(&series, &plan).run() -> Result<SearchResult, ValidationError>`. `run` validates the plan first (`Plan::validate`), so malformed plans are errors, never silent empty results.
 
 ## MVP v0.1 acceptance requirements
 

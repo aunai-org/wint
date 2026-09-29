@@ -49,9 +49,15 @@ impl Comparison {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Preference {
-    Minimize { ideal: f64 },
-    Maximize { ideal: f64 },
-    Range { min: f64, max: f64 },
+    /// Lower is better; values at or below `ideal` are perfect. A value
+    /// `scale` or more above `ideal` receives the maximum penalty.
+    Minimize { ideal: f64, scale: f64 },
+    /// Higher is better; values at or above `ideal` are perfect. A value
+    /// `scale` or more below `ideal` receives the maximum penalty.
+    Maximize { ideal: f64, scale: f64 },
+    /// Values within `[min, max]` are perfect. A value `scale` or more
+    /// outside the range receives the maximum penalty.
+    Range { min: f64, max: f64, scale: f64 },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -96,6 +102,48 @@ impl Constraint {
             weight,
         }
     }
+    fn validate(&self) -> Result<(), ValidationError> {
+        let invalid = |name: &str, reason: &'static str| ValidationError::InvalidConstraint {
+            constraint: name.to_string(),
+            reason,
+        };
+        match self {
+            Self::Hard {
+                name, threshold, ..
+            } => {
+                if !threshold.is_finite() {
+                    return Err(invalid(name, "threshold must be finite"));
+                }
+            }
+            Self::Soft {
+                name,
+                preference,
+                weight,
+                ..
+            } => {
+                if !weight.is_finite() || *weight < 0.0 {
+                    return Err(invalid(name, "weight must be finite and non-negative"));
+                }
+                let (finite, scale, ordered) = match *preference {
+                    Preference::Minimize { ideal, scale }
+                    | Preference::Maximize { ideal, scale } => (ideal.is_finite(), scale, true),
+                    Preference::Range { min, max, scale } => {
+                        (min.is_finite() && max.is_finite(), scale, min <= max)
+                    }
+                };
+                if !finite {
+                    return Err(invalid(name, "preference bounds must be finite"));
+                }
+                if !ordered {
+                    return Err(invalid(name, "range min must not exceed max"));
+                }
+                if !scale.is_finite() || scale <= 0.0 {
+                    return Err(invalid(name, "scale must be finite and positive"));
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -139,6 +187,29 @@ impl Plan {
     pub fn duration_ms(&self) -> i64 {
         self.stages.iter().map(|s| s.duration_ms).sum()
     }
+
+    /// Checks the plan against a series cadence: at least one stage, positive
+    /// cadence-aligned durations, and well-formed constraints.
+    pub fn validate(&self, cadence_ms: i64) -> Result<(), ValidationError> {
+        if self.stages.is_empty() {
+            return Err(ValidationError::EmptyPlan);
+        }
+        let mut total: i64 = 0;
+        for stage in &self.stages {
+            if stage.duration_ms <= 0 || stage.duration_ms % cadence_ms != 0 {
+                return Err(ValidationError::InvalidStageDuration {
+                    stage: stage.name.clone(),
+                });
+            }
+            total = total
+                .checked_add(stage.duration_ms)
+                .ok_or(ValidationError::PlanTooLong)?;
+            for constraint in &stage.constraints {
+                constraint.validate()?;
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -150,12 +221,46 @@ pub struct Series {
 pub enum ValidationError {
     NonPositiveCadence,
     EmptySeries,
-    NonFiniteValue { timestamp_ms: i64, metric: String },
-    IrregularTimestamp { expected: i64, actual: i64 },
+    NonFiniteValue {
+        timestamp_ms: i64,
+        metric: String,
+    },
+    IrregularTimestamp {
+        expected: i64,
+        actual: i64,
+    },
+    EmptyPlan,
+    InvalidStageDuration {
+        stage: String,
+    },
+    PlanTooLong,
+    InvalidConstraint {
+        constraint: String,
+        reason: &'static str,
+    },
 }
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{self:?}")
+        match self {
+            Self::NonPositiveCadence => write!(f, "cadence must be positive"),
+            Self::EmptySeries => write!(f, "series has no observations"),
+            Self::NonFiniteValue {
+                timestamp_ms,
+                metric,
+            } => write!(f, "metric `{metric}` at {timestamp_ms} is not finite"),
+            Self::IrregularTimestamp { expected, actual } => {
+                write!(f, "expected timestamp {expected}, found {actual}")
+            }
+            Self::EmptyPlan => write!(f, "plan has no stages"),
+            Self::InvalidStageDuration { stage } => write!(
+                f,
+                "stage `{stage}` duration must be a positive multiple of the cadence"
+            ),
+            Self::PlanTooLong => write!(f, "total plan duration overflows"),
+            Self::InvalidConstraint { constraint, reason } => {
+                write!(f, "constraint `{constraint}`: {reason}")
+            }
+        }
     }
 }
 impl std::error::Error for ValidationError {}
