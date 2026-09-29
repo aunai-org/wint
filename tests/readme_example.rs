@@ -66,3 +66,36 @@ fn half_open_boundary_excludes_end_sample() {
     assert_eq!(result.feasible.len(), 1);
     assert_eq!(result.rejected.len(), 1);
 }
+
+#[test]
+fn series_need_not_align_to_clock_boundaries() {
+    // "Use the data as given": an 08:17 start is fine; windows start at the supplied timestamps.
+    let start = 1_790_065_020_000; // not a multiple of the cadence
+    let series = Series::new(
+        3_600_000,
+        vec![
+            Observation::at(start).with("wind", 1.0),
+            Observation::at(start + 3_600_000).with("wind", 1.0),
+        ],
+    )
+    .unwrap();
+    let plan = Plan::single_stage(
+        "p",
+        3_600_000,
+        vec![Constraint::hard(
+            "w",
+            Metric::new("wind"),
+            Comparison::LessThan,
+            10.0,
+        )],
+    );
+    let result = WindowSearch::new(&series, &plan).run().unwrap();
+    assert_eq!(
+        result
+            .feasible
+            .iter()
+            .map(|w| w.start_ms)
+            .collect::<Vec<_>>(),
+        [start, start + 3_600_000]
+    );
+}

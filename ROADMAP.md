@@ -7,7 +7,7 @@ Guiding principle: get a trustworthy, explained answer from real data in minutes
 - [x] Invalid plans return `ValidationError` instead of empty results
 - [x] Plan longer than series returns an empty result (previously a slice panic)
 - [x] Integration tests, CI (fmt, clippy, test), README example corrected
-- [ ] Decide whether `Series` should require timestamps aligned to the cadence
+- [x] Decided: use data as given. No cadence-boundary alignment and no resampling (see SPEC)
 - [ ] Replace placeholder `repository` URL in Cargo.toml
 
 ## M1 - Usable from anywhere
@@ -21,6 +21,7 @@ Guiding principle: get a trustworthy, explained answer from real data in minutes
 - [x] First preset plans (drone, outdoor-event, field-work), labelled as starting points, not safety advice
 - [x] Tutorial (docs/TUTORIAL.md)
 - [ ] Verify the live Open-Meteo fetch end to end (needs a network that can reach api.open-meteo.com)
+- [ ] Opt-in resampling/alignment step, only once a real use case needs it
 - [ ] Marine data (wave height) adapter, e.g. Open-Meteo Marine API
 - [ ] Review preset thresholds with domain practitioners
 

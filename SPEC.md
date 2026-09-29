@@ -31,6 +31,8 @@ Examples: a drone team requires two safe flight hours followed by one recovery h
 
 Observations use a regular cadence. A stage duration must be a positive multiple of the cadence. `Series::new` validates strictly increasing, exactly regular timestamps; this makes coverage and outcomes unambiguous.
 
+**Data is used as given.** The engine does not resample, interpolate, or require timestamps to sit on clock boundaries: a series may start at 08:17 as long as every step is exactly one cadence, and windows start at the observation times supplied. Adapters (CSV, Open-Meteo) pass data through unchanged for the same reason, so nothing is silently assumed. Resampling or alignment is deferred until a real use case needs it and would arrive as an explicit, opt-in adapter step.
+
 ## Data model
 
 ```text
