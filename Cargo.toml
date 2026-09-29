@@ -1,0 +1,17 @@
+[package]
+name = "env-operability"
+version = "0.1.0"
+edition = "2021"
+description = "Deterministic, domain-neutral environmental operability window engine"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/example/env-operability"
+keywords = ["environment", "operability", "constraints", "scheduling"]
+categories = ["science", "algorithms"]
+
+[lib]
+name = "env_operability"
+path = "src/lib.rs"
+
+[[bin]]
+name = "env-operability"
+path = "src/main.rs"
