@@ -85,3 +85,42 @@ fn cli_reports_errors_with_nonzero_exit() {
         .unwrap();
     assert_eq!(usage.status.code(), Some(2));
 }
+
+#[test]
+fn json_series_and_plan_units_are_converted() {
+    let series: Series = serde_json::from_str(
+        r#"{"cadence_ms":3600000,
+            "units":{"wind_speed":"km/h","temperature":"F"},
+            "observations":[{"timestamp_ms":0,"values":{"wind_speed":36,"temperature":212}}]}"#,
+    )
+    .unwrap();
+    assert!((series.observations[0].values["wind_speed"] - 10.0).abs() < 1e-9);
+    assert!((series.observations[0].values["temperature"] - 100.0).abs() < 1e-9);
+
+    let constraint: env_operability::Constraint = serde_json::from_str(
+        r#"{"type":"hard","name":"w","metric":"wind_speed","comparison":"<","threshold":20,"unit":"kn"}"#,
+    )
+    .unwrap();
+    assert!(matches!(constraint,
+        env_operability::Constraint::Hard { threshold, .. } if (threshold - 10.288888).abs() < 1e-4));
+}
+
+#[test]
+fn json_unknown_units_are_errors() {
+    let bad_series = serde_json::from_str::<Series>(
+        r#"{"cadence_ms":1,"units":{"wind_speed":"furlongs"},"observations":[{"timestamp_ms":0,"values":{}}]}"#,
+    )
+    .unwrap_err();
+    assert!(
+        bad_series.to_string().contains("unknown unit `furlongs`"),
+        "{bad_series}"
+    );
+    let bad_constraint = serde_json::from_str::<env_operability::Constraint>(
+        r#"{"type":"hard","name":"w","metric":"wind_speed","comparison":"<","threshold":1,"unit":"furlongs"}"#,
+    )
+    .unwrap_err();
+    assert!(
+        bad_constraint.to_string().contains("unknown unit"),
+        "{bad_constraint}"
+    );
+}

@@ -2,6 +2,7 @@
 
 mod engine;
 mod model;
+pub mod units;
 
 pub use engine::{Evidence, RejectedWindow, SearchResult, StageResult, WindowResult, WindowSearch};
 pub use model::{

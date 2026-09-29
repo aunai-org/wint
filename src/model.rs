@@ -1,3 +1,4 @@
+use crate::units::{canonical_unit, Unit, UnitError};
 use std::collections::BTreeMap;
 use std::fmt;
 
@@ -73,6 +74,7 @@ pub enum Preference {
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "json", serde(tag = "type", rename_all = "snake_case"))]
+#[cfg_attr(feature = "json", serde(try_from = "ConstraintData"))]
 pub enum Constraint {
     Hard {
         name: String,
@@ -91,6 +93,63 @@ pub enum Constraint {
 #[cfg(feature = "json")]
 fn default_weight() -> f64 {
     1.0
+}
+/// Wire form of [`Constraint`]: identical, plus an optional `unit` in which the
+/// limits are written. Limits are converted to the metric's canonical unit.
+#[cfg(feature = "json")]
+#[derive(serde::Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+enum ConstraintData {
+    Hard {
+        name: String,
+        metric: Metric,
+        comparison: Comparison,
+        threshold: f64,
+        #[serde(default)]
+        unit: Option<String>,
+    },
+    Soft {
+        name: String,
+        metric: Metric,
+        preference: Preference,
+        #[serde(default = "default_weight")]
+        weight: f64,
+        #[serde(default)]
+        unit: Option<String>,
+    },
+}
+#[cfg(feature = "json")]
+impl TryFrom<ConstraintData> for Constraint {
+    type Error = ValidationError;
+    fn try_from(data: ConstraintData) -> Result<Self, Self::Error> {
+        let (constraint, unit) = match data {
+            ConstraintData::Hard {
+                name,
+                metric,
+                comparison,
+                threshold,
+                unit,
+            } => (Constraint::hard(name, metric, comparison, threshold), unit),
+            ConstraintData::Soft {
+                name,
+                metric,
+                preference,
+                weight,
+                unit,
+            } => (Constraint::soft(name, metric, preference, weight), unit),
+        };
+        match unit {
+            None => Ok(constraint),
+            Some(symbol) => {
+                let unit =
+                    Unit::parse(&symbol).ok_or_else(|| ValidationError::InvalidConstraint {
+                        constraint: constraint.name().to_string(),
+                        reason: "unknown unit",
+                    })?;
+                constraint.with_unit(unit)
+            }
+        }
+    }
 }
 impl Constraint {
     pub fn hard(
@@ -118,6 +177,71 @@ impl Constraint {
             preference,
             weight,
         }
+    }
+    pub fn name(&self) -> &str {
+        match self {
+            Self::Hard { name, .. } | Self::Soft { name, .. } => name,
+        }
+    }
+    /// Reinterprets this constraint's limits as written in `unit` and converts
+    /// them to the metric's canonical unit (see [`crate::units::VOCABULARY`]).
+    /// Thresholds and preference bounds convert as absolute values; a
+    /// preference `scale` converts as a difference. Fails if the metric is not
+    /// in the vocabulary or `unit` measures a different kind of quantity.
+    pub fn with_unit(self, unit: Unit) -> Result<Self, ValidationError> {
+        let name = self.name().to_string();
+        let metric = match &self {
+            Self::Hard { metric, .. } | Self::Soft { metric, .. } => metric.0.clone(),
+        };
+        let canonical =
+            canonical_unit(&metric).ok_or_else(|| ValidationError::InvalidConstraint {
+                constraint: name.clone(),
+                reason: "unit given for a metric outside the vocabulary",
+            })?;
+        let units_err = |error: UnitError| ValidationError::Units {
+            metric: metric.clone(),
+            error,
+        };
+        let abs = |v: f64| unit.convert(v, canonical).map_err(units_err);
+        let delta = |v: f64| unit.convert_delta(v, canonical).map_err(units_err);
+        Ok(match self {
+            Self::Hard {
+                name,
+                metric,
+                comparison,
+                threshold,
+            } => Self::Hard {
+                name,
+                metric,
+                comparison,
+                threshold: abs(threshold)?,
+            },
+            Self::Soft {
+                name,
+                metric,
+                preference,
+                weight,
+            } => Self::Soft {
+                name,
+                metric,
+                weight,
+                preference: match preference {
+                    Preference::Minimize { ideal, scale } => Preference::Minimize {
+                        ideal: abs(ideal)?,
+                        scale: delta(scale)?,
+                    },
+                    Preference::Maximize { ideal, scale } => Preference::Maximize {
+                        ideal: abs(ideal)?,
+                        scale: delta(scale)?,
+                    },
+                    Preference::Range { min, max, scale } => Preference::Range {
+                        min: abs(min)?,
+                        max: abs(max)?,
+                        scale: delta(scale)?,
+                    },
+                },
+            },
+        })
     }
     fn validate(&self) -> Result<(), ValidationError> {
         let invalid = |name: &str, reason: &'static str| ValidationError::InvalidConstraint {
@@ -245,12 +369,23 @@ pub struct Series {
 struct SeriesData {
     cadence_ms: i64,
     observations: Vec<Observation>,
+    /// Optional source units per metric, converted to canonical on load.
+    #[serde(default)]
+    units: BTreeMap<String, String>,
 }
 #[cfg(feature = "json")]
 impl TryFrom<SeriesData> for Series {
     type Error = ValidationError;
     fn try_from(data: SeriesData) -> Result<Self, Self::Error> {
-        Series::new(data.cadence_ms, data.observations)
+        let mut units = BTreeMap::new();
+        for (metric, symbol) in data.units {
+            let unit = Unit::parse(&symbol).ok_or_else(|| ValidationError::UnknownUnit {
+                metric: metric.clone(),
+                symbol,
+            })?;
+            units.insert(metric, unit);
+        }
+        Series::with_units(data.cadence_ms, data.observations, &units)
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -274,6 +409,21 @@ pub enum ValidationError {
         constraint: String,
         reason: &'static str,
     },
+    /// A unit conversion failed for this metric.
+    Units {
+        metric: String,
+        error: UnitError,
+    },
+    /// A unit was declared for a metric outside the vocabulary, so there is
+    /// no canonical unit to convert to.
+    UnknownMetricUnit {
+        metric: String,
+    },
+    /// A declared unit symbol is not recognised.
+    UnknownUnit {
+        metric: String,
+        symbol: String,
+    },
 }
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -296,11 +446,50 @@ impl fmt::Display for ValidationError {
             Self::InvalidConstraint { constraint, reason } => {
                 write!(f, "constraint `{constraint}`: {reason}")
             }
+            Self::Units { metric, error } => write!(f, "metric `{metric}`: {error}"),
+            Self::UnknownMetricUnit { metric } => write!(
+                f,
+                "metric `{metric}` is not in the vocabulary, so a unit cannot be converted"
+            ),
+            Self::UnknownUnit { metric, symbol } => {
+                write!(f, "metric `{metric}`: unknown unit `{symbol}`")
+            }
         }
     }
 }
 impl std::error::Error for ValidationError {}
 impl Series {
+    /// Builds a series from readings given in `units` (metric name to unit)
+    /// and converts them to each metric's canonical unit. Metrics without an
+    /// entry are assumed to already be canonical or caller-defined.
+    pub fn with_units(
+        cadence_ms: i64,
+        mut observations: Vec<Observation>,
+        units: &BTreeMap<String, Unit>,
+    ) -> Result<Self, ValidationError> {
+        for (metric, from) in units {
+            let to = canonical_unit(metric).ok_or_else(|| ValidationError::UnknownMetricUnit {
+                metric: metric.clone(),
+            })?;
+            if from.dimension() != to.dimension() {
+                return Err(ValidationError::Units {
+                    metric: metric.clone(),
+                    error: UnitError::DimensionMismatch { from: *from, to },
+                });
+            }
+            for observation in &mut observations {
+                if let Some(value) = observation.values.get_mut(metric) {
+                    *value = from
+                        .convert(*value, to)
+                        .map_err(|error| ValidationError::Units {
+                            metric: metric.clone(),
+                            error,
+                        })?;
+                }
+            }
+        }
+        Self::new(cadence_ms, observations)
+    }
     pub fn new(cadence_ms: i64, observations: Vec<Observation>) -> Result<Self, ValidationError> {
         if cadence_ms <= 0 {
             return Err(ValidationError::NonPositiveCadence);
