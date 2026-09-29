@@ -22,7 +22,7 @@ required-features = ["json"]
 [dependencies]
 serde = { version = "1.0.229", features = ["derive"], optional = true }
 serde_json = { version = "1.0.151", optional = true }
-ureq = { version = "3.4.2", optional = true }
+ureq = { version = "3.4.2", optional = true, default-features = false, features = ["rustls", "platform-verifier", "gzip"] }
 wasm-bindgen = { version = "=0.2.129", optional = true }
 
 [features]

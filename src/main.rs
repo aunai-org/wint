@@ -175,7 +175,14 @@ fn load_plan(source: &PlanSource) -> Result<Plan, String> {
 
 #[cfg(feature = "net")]
 fn fetch(url: &str) -> Result<String, String> {
-    let mut response = ureq::get(url)
+    // Trust the operating system's certificate store (not a bundled list), so
+    // corporate and other TLS-intercepting proxies that install their own CA work.
+    let tls = ureq::tls::TlsConfig::builder()
+        .root_certs(ureq::tls::RootCerts::PlatformVerifier)
+        .build();
+    let agent: ureq::Agent = ureq::Agent::config_builder().tls_config(tls).build().into();
+    let mut response = agent
+        .get(url)
         .call()
         .map_err(|e| format!("request failed: {e}"))?;
     response

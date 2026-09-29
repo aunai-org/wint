@@ -20,7 +20,8 @@ Guiding principle: get a trustworthy, explained answer from real data in minutes
 - [x] Metric vocabulary with units and conversion
 - [x] First preset plans (drone, outdoor-event, field-work), labelled as starting points, not safety advice
 - [x] Tutorial (docs/TUTORIAL.md)
-- [ ] Verify the live Open-Meteo fetch end to end (needs a network that can reach api.open-meteo.com)
+- [x] Live Open-Meteo fetch verified from the CLI against the real API (all 11 variables, units as assumed); the `net` build trusts the OS certificate store so TLS-intercepting proxies work
+- [ ] Verify the live fetch from a real browser (demo)
 - [ ] Opt-in resampling/alignment step, only once a real use case needs it
 - [ ] Marine data (wave height) adapter, e.g. Open-Meteo Marine API
 - [ ] Review preset thresholds with domain practitioners
