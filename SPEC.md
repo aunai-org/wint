@@ -39,14 +39,14 @@ Plan { name, stages: [Stage { name, duration_ms, hard, soft }] }
 HardConstraint { name, metric, comparison, threshold }
 SoftConstraint { name, metric, preference, weight }
 Preference: Minimize { ideal, scale } | Maximize { ideal, scale } | Range { min, max, scale }
-WindowResult { start_ms, end_ms, suitability, stages, evidence }
+WindowResult { start_ms, end_ms, suitability, stages: [StageResult { name, start_ms, end_ms, suitability }], evidence }
 ```
 
 Metrics are opaque strings with units owned by the caller/adapter. A production schema layer will attach units, provenance, quality flags, and ensemble members rather than assuming meteorological names.
 
 ## Outputs, scoring, and explainability
 
-The result separates feasible windows from rejected candidates. Feasible windows are sorted by descending suitability then ascending start time. Evidence records the stage, constraint, sample timestamp, observed value, expected relation, and pass/fail status. Rejections preserve the first decisive failure, keeping search output useful without returning an unbounded trace. Score calculations are deterministic and use only supplied values; score is not a probability or safety certification.
+The result separates feasible windows from rejected candidates. Feasible windows are sorted by descending suitability then ascending start time. Evidence records the stage, constraint, sample timestamp, observed value, expected relation, pass/fail status and (for soft constraints) the penalty. To keep output bounded, a feasible window reports one *binding* sample per constraint: the sample closest to a hard limit, or with the largest soft penalty (earliest on ties). Each feasible window also carries a per-stage breakdown (time range and stage-local suitability). Rejections preserve the first decisive failure in time order. Score calculations are deterministic and use only supplied values; score is not a probability or safety certification.
 
 ## Architecture
 
@@ -58,7 +58,7 @@ adapters (future) -> normalized Series -> search/evaluation -> WindowSearchResul
 CLI (example) --------------------------------------------------^
 ```
 
-Separating adapters protects the core from provider-specific units, interpolation, and forecast policy. Later crates may add serde schemas, CSV/JSON adapters, a CLI, and source-specific integrations.
+Separating adapters protects the core from provider-specific units, interpolation, and forecast policy. The optional `json` feature adds serde (de)serialization of series, plans and results plus the CLI; JSON series deserialize through `Series::new`, so validation cannot be bypassed. Later crates may add CSV adapters and source-specific integrations.
 
 ## Crate layout and API
 
@@ -67,7 +67,7 @@ src/
   lib.rs          public API
   model.rs        Series, observations, plans, constraint definitions
   engine.rs       candidate search, validation, evidence, ranking
-  main.rs         intentionally small CLI placeholder
+  main.rs         JSON CLI (requires the `json` feature)
 ```
 
 Key API: `Series::new(cadence_ms, observations) -> Result<Series, ValidationError>`, `Plan::single_stage(...)`, `Plan::new(...)`, and `WindowSearch::new(&series, &plan).run() -> Result<SearchResult, ValidationError>`. `run` validates the plan first (`Plan::validate`), so malformed plans are errors, never silent empty results.

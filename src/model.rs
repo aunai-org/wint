@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 pub struct Observation {
     pub timestamp_ms: i64,
     pub values: BTreeMap<String, f64>,
@@ -20,6 +21,7 @@ impl Observation {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 pub struct Metric(pub String);
 impl Metric {
     pub fn new(name: impl Into<String>) -> Self {
@@ -28,11 +30,17 @@ impl Metric {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 pub enum Comparison {
+    #[cfg_attr(feature = "json", serde(rename = "<"))]
     LessThan,
+    #[cfg_attr(feature = "json", serde(rename = "<="))]
     LessThanOrEqual,
+    #[cfg_attr(feature = "json", serde(rename = ">"))]
     GreaterThan,
+    #[cfg_attr(feature = "json", serde(rename = ">="))]
     GreaterThanOrEqual,
+    #[cfg_attr(feature = "json", serde(rename = "=="))]
     Equal,
 }
 impl Comparison {
@@ -48,6 +56,8 @@ impl Comparison {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(tag = "kind", rename_all = "snake_case"))]
 pub enum Preference {
     /// Lower is better; values at or below `ideal` are perfect. A value
     /// `scale` or more above `ideal` receives the maximum penalty.
@@ -61,6 +71,8 @@ pub enum Preference {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(tag = "type", rename_all = "snake_case"))]
 pub enum Constraint {
     Hard {
         name: String,
@@ -72,8 +84,13 @@ pub enum Constraint {
         name: String,
         metric: Metric,
         preference: Preference,
+        #[cfg_attr(feature = "json", serde(default = "default_weight"))]
         weight: f64,
     },
+}
+#[cfg(feature = "json")]
+fn default_weight() -> f64 {
+    1.0
 }
 impl Constraint {
     pub fn hard(
@@ -147,6 +164,7 @@ impl Constraint {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 pub struct Stage {
     pub name: String,
     pub duration_ms: i64,
@@ -163,6 +181,7 @@ impl Stage {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 pub struct Plan {
     pub name: String,
     pub stages: Vec<Stage>,
@@ -213,9 +232,26 @@ impl Plan {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(try_from = "SeriesData"))]
 pub struct Series {
     pub cadence_ms: i64,
     pub observations: Vec<Observation>,
+}
+/// Unvalidated wire form of [`Series`]; deserializing goes through
+/// [`Series::new`] so JSON input cannot bypass validation.
+#[cfg(feature = "json")]
+#[derive(serde::Deserialize)]
+struct SeriesData {
+    cadence_ms: i64,
+    observations: Vec<Observation>,
+}
+#[cfg(feature = "json")]
+impl TryFrom<SeriesData> for Series {
+    type Error = ValidationError;
+    fn try_from(data: SeriesData) -> Result<Self, Self::Error> {
+        Series::new(data.cadence_ms, data.observations)
+    }
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ValidationError {

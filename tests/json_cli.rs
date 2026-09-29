@@ -1,0 +1,87 @@
+#![cfg(feature = "json")]
+
+use env_operability::{Plan, SearchResult, Series, WindowSearch};
+use std::process::Command;
+
+const PLAN: &str = include_str!("../examples/plan.json");
+const SERIES: &str = include_str!("../examples/series.json");
+
+#[test]
+fn example_files_parse_and_search() {
+    let series: Series = serde_json::from_str(SERIES).unwrap();
+    let plan: Plan = serde_json::from_str(PLAN).unwrap();
+    let result = WindowSearch::new(&series, &plan).run().unwrap();
+    assert_eq!(result.feasible.len(), 2);
+    assert_eq!(result.rejected.len(), 2);
+    let best = &result.feasible[0];
+    assert_eq!(best.stages.len(), 2);
+    assert_eq!(best.stages[0].name, "flight");
+    assert_eq!(best.stages[1].start_ms, best.stages[0].end_ms);
+}
+
+#[test]
+fn json_series_cannot_bypass_validation() {
+    let irregular = r#"{"cadence_ms":10,"observations":[
+        {"timestamp_ms":0,"values":{}},{"timestamp_ms":25,"values":{}}]}"#;
+    let err = serde_json::from_str::<Series>(irregular).unwrap_err();
+    assert!(err.to_string().contains("expected timestamp 10"), "{err}");
+}
+
+#[test]
+fn soft_weight_defaults_to_one_and_plan_round_trips() {
+    let plan: Plan = serde_json::from_str(PLAN).unwrap();
+    let text = serde_json::to_string(&plan).unwrap();
+    assert_eq!(serde_json::from_str::<Plan>(&text).unwrap(), plan);
+    let soft = r#"{"type":"soft","name":"n","metric":"m",
+        "preference":{"kind":"maximize","ideal":1,"scale":2}}"#;
+    let c: env_operability::Constraint = serde_json::from_str(soft).unwrap();
+    assert!(matches!(c, env_operability::Constraint::Soft { weight, .. } if weight == 1.0));
+}
+
+fn cli() -> Command {
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_env-operability"));
+    cmd.args([
+        "--plan",
+        "examples/plan.json",
+        "--series",
+        "examples/series.json",
+    ]);
+    cmd
+}
+
+#[test]
+fn cli_json_output_matches_library() {
+    let out = cli().arg("--json").output().unwrap();
+    assert!(out.status.success());
+    let value: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!(value["feasible"].as_array().unwrap().len(), 2);
+    assert_eq!(value["feasible"][0]["stages"][0]["name"], "flight");
+    let _ = SearchResult::default();
+}
+
+#[test]
+fn cli_text_output_lists_windows_and_rejections() {
+    let out = cli().arg("--rejected").output().unwrap();
+    assert!(out.status.success());
+    let text = String::from_utf8(out.stdout).unwrap();
+    assert!(text.contains("2 feasible, 2 rejected"), "{text}");
+    assert!(text.contains("2026-09-21T09:00Z"), "{text}");
+    assert!(
+        text.contains("rejected 2026-09-21T11:00Z: flight/safe wind"),
+        "{text}"
+    );
+}
+
+#[test]
+fn cli_reports_errors_with_nonzero_exit() {
+    let missing = Command::new(env!("CARGO_BIN_EXE_env-operability"))
+        .args(["--plan", "nope.json", "--series", "examples/series.json"])
+        .output()
+        .unwrap();
+    assert_eq!(missing.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&missing.stderr).contains("cannot read plan"));
+    let usage = Command::new(env!("CARGO_BIN_EXE_env-operability"))
+        .output()
+        .unwrap();
+    assert_eq!(usage.status.code(), Some(2));
+}

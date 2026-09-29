@@ -7,6 +7,17 @@ It deliberately starts below data ingestion and user interfaces: callers supply 
 See [the specification](SPEC.md) for the product and implementation plan.
 New to the field? Start with the [plain-language learning guide](LEARNING_GUIDE.md).
 
+## Command line
+
+The CLI reads JSON and is behind the optional `json` feature (the library core has no dependencies):
+
+```sh
+cargo run --features json -- --plan examples/plan.json --series examples/series.json
+cargo run --features json -- --plan examples/plan.json --series examples/series.json --json
+```
+
+Options: `--top <n>`, `--rejected` (why each rejected window failed), `--json` (full machine-readable result). See [`examples/`](examples) for the input format: a series is `{cadence_ms, observations: [{timestamp_ms, values}]}` and a plan is `{name, stages: [{name, duration_ms, constraints}]}`. Hard constraints use `"comparison": "<" | "<=" | ">" | ">=" | "=="`; soft constraints take a `preference` of kind `minimize`, `maximize` or `range` (each with a `scale`) and an optional `weight` (default 1). JSON series go through the same validation as `Series::new`.
+
 ## Quick example
 
 ```rust

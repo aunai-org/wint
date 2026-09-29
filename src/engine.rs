@@ -1,6 +1,12 @@
 use crate::{Comparison, Constraint, Plan, Preference, Series, ValidationError};
 
+/// One auditable observation behind a decision.
+///
+/// For a passing hard constraint the evidence is the *binding* sample: the one
+/// closest to the limit. For a soft constraint it is the sample with the
+/// largest penalty. For a rejection it is the first sample that failed.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
 pub struct Evidence {
     pub stage: String,
     pub constraint: String,
@@ -9,21 +15,37 @@ pub struct Evidence {
     pub actual: Option<f64>,
     pub expected: String,
     pub passed: bool,
+    /// Soft constraints only: penalty in `[0, 1]` for this sample.
+    pub penalty: Option<f64>,
+}
+/// Per-stage outcome of a feasible window.
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
+pub struct StageResult {
+    pub name: String,
+    pub start_ms: i64,
+    pub end_ms: i64,
+    /// Soft-preference suitability within this stage alone (1.0 if none apply).
+    pub suitability: f64,
 }
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
 pub struct WindowResult {
     pub start_ms: i64,
     pub end_ms: i64,
     pub suitability: f64,
+    pub stages: Vec<StageResult>,
     pub evidence: Vec<Evidence>,
 }
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
 pub struct RejectedWindow {
     pub start_ms: i64,
     pub end_ms: i64,
     pub failure: Evidence,
 }
 #[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
 pub struct SearchResult {
     pub feasible: Vec<WindowResult>,
     pub rejected: Vec<RejectedWindow>,
@@ -70,13 +92,18 @@ impl<'a> WindowSearch<'a> {
     }
     fn evaluate(&self, start: usize) -> Result<WindowResult, Box<Evidence>> {
         let mut evidence = Vec::new();
+        let mut stages = Vec::new();
         let mut weighted_penalty = 0.0;
         let mut total_weight = 0.0;
         let mut offset = 0;
         for stage in &self.plan.stages {
             let count = (stage.duration_ms / self.series.cadence_ms) as usize;
-            for observation in &self.series.observations[start + offset..start + offset + count] {
-                for constraint in &stage.constraints {
+            let samples = &self.series.observations[start + offset..start + offset + count];
+            // Binding evidence per constraint: (rank, evidence); lower rank binds harder.
+            let mut binding: Vec<Option<(f64, Evidence)>> = vec![None; stage.constraints.len()];
+            let (mut stage_penalty, mut stage_weight) = (0.0, 0.0);
+            for observation in samples {
+                for (index, constraint) in stage.constraints.iter().enumerate() {
                     match constraint {
                         Constraint::Hard {
                             name,
@@ -94,11 +121,14 @@ impl<'a> WindowSearch<'a> {
                                 actual,
                                 expected: format_comparison(*comparison, *threshold),
                                 passed,
+                                penalty: None,
                             };
                             if !passed {
                                 return Err(Box::new(item));
                             }
-                            evidence.push(item);
+                            let margin =
+                                hard_margin(*comparison, actual.unwrap_or(0.0), *threshold);
+                            keep_binding(&mut binding[index], margin, item);
                         }
                         Constraint::Soft {
                             name,
@@ -108,35 +138,74 @@ impl<'a> WindowSearch<'a> {
                         } if *weight > 0.0 => {
                             if let Some(actual) = observation.values.get(&metric.0).copied() {
                                 let penalty = preference_penalty(preference, actual);
-                                weighted_penalty += penalty * weight;
-                                total_weight += weight;
-                                evidence.push(Evidence {
+                                stage_penalty += penalty * weight;
+                                stage_weight += weight;
+                                let item = Evidence {
                                     stage: stage.name.clone(),
                                     constraint: name.clone(),
                                     timestamp_ms: observation.timestamp_ms,
                                     metric: metric.0.clone(),
                                     actual: Some(actual),
-                                    expected: "soft preference".into(),
+                                    expected: format_preference(preference),
                                     passed: true,
-                                });
+                                    penalty: Some(penalty),
+                                };
+                                keep_binding(&mut binding[index], -penalty, item);
                             }
                         }
                         Constraint::Soft { .. } => {}
                     }
                 }
             }
+            evidence.extend(binding.into_iter().flatten().map(|(_, item)| item));
+            weighted_penalty += stage_penalty;
+            total_weight += stage_weight;
+            let stage_start = samples[0].timestamp_ms;
+            stages.push(StageResult {
+                name: stage.name.clone(),
+                start_ms: stage_start,
+                end_ms: stage_start + stage.duration_ms,
+                suitability: suitability(stage_penalty, stage_weight),
+            });
             offset += count;
         }
         Ok(WindowResult {
             start_ms: 0,
             end_ms: 0,
-            suitability: if total_weight == 0.0 {
-                1.0
-            } else {
-                (1.0 - weighted_penalty / total_weight).clamp(0.0, 1.0)
-            },
+            suitability: suitability(weighted_penalty, total_weight),
+            stages,
             evidence,
         })
+    }
+}
+fn suitability(weighted_penalty: f64, total_weight: f64) -> f64 {
+    if total_weight == 0.0 {
+        1.0
+    } else {
+        (1.0 - weighted_penalty / total_weight).clamp(0.0, 1.0)
+    }
+}
+/// Keeps the lowest-rank item; ties keep the earliest sample.
+fn keep_binding(slot: &mut Option<(f64, Evidence)>, rank: f64, item: Evidence) {
+    if slot.as_ref().is_none_or(|(best, _)| rank < *best) {
+        *slot = Some((rank, item));
+    }
+}
+/// Distance a passing value sits inside its limit (0 means right at it).
+fn hard_margin(c: Comparison, actual: f64, threshold: f64) -> f64 {
+    match c {
+        Comparison::LessThan | Comparison::LessThanOrEqual => threshold - actual,
+        Comparison::GreaterThan | Comparison::GreaterThanOrEqual => actual - threshold,
+        Comparison::Equal => 0.0,
+    }
+}
+fn format_preference(p: &Preference) -> String {
+    match *p {
+        Preference::Minimize { ideal, scale } => format!("minimize: ideal {ideal}, scale {scale}"),
+        Preference::Maximize { ideal, scale } => format!("maximize: ideal {ideal}, scale {scale}"),
+        Preference::Range { min, max, scale } => {
+            format!("range: {min}..={max}, scale {scale}")
+        }
     }
 }
 fn format_comparison(c: Comparison, t: f64) -> String {
@@ -302,6 +371,55 @@ mod tests {
         let plan = Plan::single_stage("long", 10, vec![]);
         let found = WindowSearch::new(&series(), &plan).run().unwrap();
         assert!(found.feasible.is_empty() && found.rejected.is_empty());
+    }
+    #[test]
+    fn evidence_reports_binding_sample_not_every_sample() {
+        // Windows of 3 samples over wind 5, 12, 4: the binding (closest to the
+        // limit) sample for "wind < 20" is the 12 at t=1, and only one evidence
+        // row is produced for the constraint.
+        let plan = Plan::single_stage(
+            "p",
+            3,
+            vec![Constraint::hard(
+                "wind",
+                Metric::new("wind"),
+                Comparison::LessThan,
+                20.0,
+            )],
+        );
+        let found = WindowSearch::new(&series(), &plan).run().unwrap();
+        let window = &found.feasible[0];
+        assert_eq!(window.evidence.len(), 1);
+        assert_eq!(window.evidence[0].timestamp_ms, 1);
+        assert_eq!(window.evidence[0].actual, Some(12.0));
+    }
+    #[test]
+    fn stage_breakdown_scores_each_stage_separately() {
+        let calm = |name: &str| {
+            Constraint::soft(
+                name,
+                Metric::new("wind"),
+                Preference::Minimize {
+                    ideal: 0.0,
+                    scale: 10.0,
+                },
+                1.0,
+            )
+        };
+        let plan = Plan::new(
+            "s",
+            vec![
+                Stage::new("a", 1, vec![calm("a calm")]),
+                Stage::new("b", 1, vec![]),
+            ],
+        );
+        let found = WindowSearch::new(&series(), &plan).run().unwrap();
+        let first = found.feasible.iter().find(|w| w.start_ms == 0).unwrap();
+        assert_eq!(first.stages.len(), 2);
+        assert_eq!((first.stages[0].start_ms, first.stages[0].end_ms), (0, 1));
+        assert_eq!((first.stages[1].start_ms, first.stages[1].end_ms), (1, 2));
+        assert!((first.stages[0].suitability - 0.5).abs() < 1e-9);
+        assert_eq!(first.stages[1].suitability, 1.0);
     }
     #[test]
     fn rejects_irregular_series() {

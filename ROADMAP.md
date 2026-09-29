@@ -11,9 +11,9 @@ Guiding principle: get a trustworthy, explained answer from real data in minutes
 - [ ] Replace placeholder `repository` URL in Cargo.toml
 
 ## M1 - Usable from anywhere
-- [ ] Optional serde JSON for series, plans and results
-- [ ] Working CLI: plan + series in, ranked windows out
-- [ ] Per-stage breakdown in results; less noisy evidence
+- [x] Optional serde JSON (`json` feature) for series, plans and results; JSON series are validated
+- [x] Working CLI: plan + series in, ranked windows out (text or `--json`), with example files
+- [x] Per-stage breakdown in results; evidence reduced to the binding sample per constraint
 
 ## M2 - Real data
 - [ ] Open-Meteo and CSV adapters
