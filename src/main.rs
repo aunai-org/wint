@@ -1,5 +1,6 @@
 //! Command-line front end: `env-operability --plan plan.json --series series.json`.
 
+use env_operability::time::format_utc;
 use env_operability::{Plan, SearchResult, Series, WindowSearch};
 use std::process::ExitCode;
 
@@ -127,27 +128,6 @@ fn print_text(plan: &Plan, result: &SearchResult, args: &Args) {
     }
 }
 
-/// Formats Unix milliseconds as `YYYY-MM-DDTHH:MMZ` (proleptic Gregorian, UTC).
-fn format_utc(ms: i64) -> String {
-    let minutes = ms.div_euclid(60_000);
-    let (days, minute_of_day) = (minutes.div_euclid(1440), minutes.rem_euclid(1440));
-    // Civil-from-days (Howard Hinnant's algorithm).
-    let z = days + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = z.rem_euclid(146_097);
-    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let day = doy - (153 * mp + 2) / 5 + 1;
-    let month = if mp < 10 { mp + 3 } else { mp - 9 };
-    let year = yoe + era * 400 + i64::from(month <= 2);
-    format!(
-        "{year:04}-{month:02}-{day:02}T{:02}:{:02}Z",
-        minute_of_day / 60,
-        minute_of_day % 60
-    )
-}
-
 fn main() -> ExitCode {
     match parse_args() {
         Ok(None) => {
@@ -165,17 +145,5 @@ fn main() -> ExitCode {
             eprintln!("error: {message}\n\n{USAGE}");
             ExitCode::from(2)
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::format_utc;
-    #[test]
-    fn formats_known_instants() {
-        assert_eq!(format_utc(0), "1970-01-01T00:00Z");
-        assert_eq!(format_utc(1_790_000_000_000), "2026-09-21T14:13Z");
-        assert_eq!(format_utc(-60_000), "1969-12-31T23:59Z");
-        assert_eq!(format_utc(951_782_400_000), "2000-02-29T00:00Z");
     }
 }
