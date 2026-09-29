@@ -26,7 +26,10 @@ Guiding principle: get a trustworthy, explained answer from real data in minutes
 - [ ] Review preset thresholds with domain practitioners
 
 ## M3 - Reach
-- [ ] WASM build and demo web app
+- [x] WASM build (`wasm` feature, `scripts/build-wasm.sh`, Node smoke test, CI job)
+- [x] Demo web app, in its own repository (`wint-demo`), vendoring the built package
+- [ ] Publish an npm package so the demo need not vendor files
+- [ ] Host the demo (e.g. GitHub Pages) and verify live forecasts from a browser
 - [ ] Python bindings
 
 ## M4 - Depth

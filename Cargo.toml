@@ -11,6 +11,8 @@ categories = ["science", "algorithms"]
 [lib]
 name = "env_operability"
 path = "src/lib.rs"
+# cdylib is only used by the `wasm` feature build (see scripts/build-wasm.sh).
+crate-type = ["rlib", "cdylib"]
 
 [[bin]]
 name = "env-operability"
@@ -21,9 +23,20 @@ required-features = ["json"]
 serde = { version = "1.0.229", features = ["derive"], optional = true }
 serde_json = { version = "1.0.151", optional = true }
 ureq = { version = "3.4.2", optional = true }
+wasm-bindgen = { version = "=0.2.129", optional = true }
 
 [features]
 # JSON (de)serialization of series, plans and results; required by the CLI.
 json = ["dep:serde", "dep:serde_json"]
 # Lets the CLI fetch live forecasts from Open-Meteo (adds an HTTP client).
 net = ["json", "dep:ureq"]
+# JavaScript/WASM bindings (JSON in, JSON out). Build with scripts/build-wasm.sh.
+wasm = ["json", "dep:wasm-bindgen"]
+wasm-bindgen = ["dep:wasm-bindgen"]
+
+# Small binaries matter for the WASM build; the engine is not performance-critical.
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

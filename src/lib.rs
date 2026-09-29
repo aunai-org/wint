@@ -6,6 +6,8 @@ mod model;
 pub mod presets;
 pub mod time;
 pub mod units;
+#[cfg(feature = "wasm")]
+pub mod wasm;
 
 pub use engine::{Evidence, RejectedWindow, SearchResult, StageResult, WindowResult, WindowSearch};
 pub use model::{

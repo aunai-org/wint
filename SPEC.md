@@ -60,7 +60,7 @@ adapters (future) -> normalized Series -> search/evaluation -> WindowSearchResul
 CLI (example) --------------------------------------------------^
 ```
 
-Separating adapters protects the core from provider-specific units, interpolation, and forecast policy. The optional `json` feature adds serde (de)serialization of series, plans and results plus the CLI; JSON series deserialize through `Series::new`, so validation cannot be bypassed. Later crates may add CSV adapters and source-specific integrations.
+Separating adapters protects the core from provider-specific units, interpolation, and forecast policy. The optional `wasm` feature (implies `json`) exposes the same operations to JavaScript via wasm-bindgen; it adds no logic of its own. The optional `json` feature adds serde (de)serialization of series, plans and results plus the CLI; JSON series deserialize through `Series::new`, so validation cannot be bypassed. Later crates may add CSV adapters and source-specific integrations.
 
 ## Crate layout and API
 
@@ -73,6 +73,7 @@ src/
   time.rs         ISO 8601 <-> Unix ms helpers
   adapters/       csv (no deps), open_meteo (json feature): series from external data
   presets.rs      illustrative starting-point plans
+  wasm.rs         JavaScript bindings (`wasm` feature): JSON in, JSON out
   main.rs         CLI (requires the `json` feature; `net` adds live fetching)
 ```
 
