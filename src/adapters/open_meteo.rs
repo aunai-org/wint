@@ -9,6 +9,11 @@
 //! `hourly_units` to the canonical vocabulary units, so it does not matter
 //! which `wind_speed_unit` was requested. `null` readings become missing
 //! values, which makes any hard constraint on that metric fail visibly.
+//!
+//! The request uses `timezone=auto`; timestamps stay absolute (Unix seconds)
+//! and the response's `utc_offset_seconds` becomes the series' local-clock
+//! offset, so time-of-day schedules refer to the place's own time. A single
+//! offset is used for the whole forecast (see [`crate::Schedule`]).
 
 use super::AdapterError;
 use crate::units::Unit;
@@ -27,6 +32,7 @@ pub const VARIABLES: &[(&str, &str)] = &[
     ("relative_humidity_2m", "relative_humidity"),
     ("visibility", "visibility"),
     ("pressure_msl", "pressure"),
+    ("is_day", "is_day"),
 ];
 
 /// Builds a forecast request URL for a point (`forecast_days` is clamped to 1..=16).
@@ -34,7 +40,7 @@ pub fn request_url(latitude: f64, longitude: f64, forecast_days: u32) -> String 
     let variables: Vec<&str> = VARIABLES.iter().map(|(v, _)| *v).collect();
     format!(
         "https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}\
-         &hourly={}&wind_speed_unit=ms&timeformat=unixtime&timezone=GMT&forecast_days={}",
+         &hourly={}&wind_speed_unit=ms&timeformat=unixtime&timezone=auto&forecast_days={}",
         variables.join(","),
         forecast_days.clamp(1, 16)
     )
@@ -100,19 +106,26 @@ pub fn parse(json: &str) -> Result<Series, AdapterError> {
                     "expected an array as long as `time`",
                 )
             })?;
-        let symbol = root
+        let declared = root
             .get("hourly_units")
             .and_then(|u| u.get(*variable))
-            .and_then(Value::as_str)
-            .ok_or_else(|| {
-                AdapterError::format(format!("hourly_units.{variable}"), "missing unit")
-            })?;
-        let from = Unit::parse(symbol).ok_or_else(|| {
-            AdapterError::format(
-                format!("hourly_units.{variable}"),
-                format!("unknown unit `{symbol}`"),
-            )
-        })?;
+            .and_then(Value::as_str);
+        let from = match (*variable, declared) {
+            // The daylight flag is unitless; the API may report an empty unit or none.
+            ("is_day", None | Some("")) => Unit::Flag,
+            (_, None) => {
+                return Err(AdapterError::format(
+                    format!("hourly_units.{variable}"),
+                    "missing unit",
+                ))
+            }
+            (_, Some(symbol)) => Unit::parse(symbol).ok_or_else(|| {
+                AdapterError::format(
+                    format!("hourly_units.{variable}"),
+                    format!("unknown unit `{symbol}`"),
+                )
+            })?,
+        };
         let to =
             crate::units::canonical_unit(metric).expect("adapter metrics are in the vocabulary");
         for (observation, value) in observations.iter_mut().zip(values) {
@@ -144,7 +157,13 @@ pub fn parse(json: &str) -> Result<Series, AdapterError> {
         ));
     }
     let cadence = (times[1] - times[0]) * 1000;
-    Ok(Series::new(cadence, observations)?)
+    let offset_seconds = root
+        .get("utc_offset_seconds")
+        .and_then(Value::as_i64)
+        .unwrap_or(0);
+    let offset_minutes = i32::try_from((offset_seconds as f64 / 60.0).round() as i64)
+        .map_err(|_| AdapterError::format("utc_offset_seconds", "out of range"))?;
+    Ok(Series::new(cadence, observations)?.with_utc_offset(offset_minutes)?)
 }
 
 #[cfg(test)]
@@ -166,6 +185,10 @@ mod tests {
         assert!((first["wind_gust"] - 15.0).abs() < 1e-9);
         assert_eq!(first["temperature"], 18.5);
         assert_eq!(first["visibility"], 24140.0);
+        // The place's local clock and the daylight flag (declared with an empty unit) come through.
+        assert_eq!(series.utc_offset_minutes, 120);
+        assert_eq!(first["is_day"], 1.0);
+        assert_eq!(series.observations[3].values["is_day"], 0.0);
         // null becomes a missing reading, not zero.
         assert!(!series.observations[2]
             .values
@@ -176,6 +199,7 @@ mod tests {
         let url = request_url(52.52, 13.41, 99);
         assert!(url.contains("latitude=52.52&longitude=13.41"));
         assert!(url.contains("wind_speed_10m") && url.contains("timeformat=unixtime"));
+        assert!(url.contains("timezone=auto") && url.contains("is_day"));
         assert!(url.ends_with("forecast_days=16"));
     }
     #[test]

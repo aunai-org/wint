@@ -21,10 +21,10 @@ cargo run --features net -- --preset drone --hours 2 --open-meteo 52.52,13.41
 cargo run --features json -- --list-presets
 ```
 
-Options: `--top <n>`, `--rejected` (why each rejected window failed), `--json` (full result). New here? Follow the [tutorial](docs/TUTORIAL.md). Input formats:
+Options: `--top <n>`, `--rejected` (why each rejected window failed), `--json` (full result), `--between 09:00-12:00` (only operate inside a daily window of the data's local time; `20:00-06:00` wraps midnight, `00:00-20:00` means until 8pm) and `--utc-offset +02:00` (the local clock; Open-Meteo data already carries it). New here? Follow the [tutorial](docs/TUTORIAL.md). Input formats:
 
 - **Series JSON** `{cadence_ms, units?, observations: [{timestamp_ms, values}]}`, **series CSV** (see [`examples/series.csv`](examples/series.csv)), or a saved **Open-Meteo** response (`--format open-meteo`). All are validated and converted to canonical units.
-- **Plan JSON** `{name, stages: [{name, duration_ms, constraints}]}`; see [`examples/plan.json`](examples/plan.json). Hard constraints use `"comparison": "<" | "<=" | ">" | ">=" | "=="`; soft constraints take a `preference` (`minimize`, `maximize` or `range`, each with a `scale`) and an optional `weight` (default 1). Any constraint may add a `"unit"` for its limits.
+- **Plan JSON** `{name, stages: [{name, duration_ms, constraints}]}`; see [`examples/plan.json`](examples/plan.json). Hard constraints use `"comparison": "<" | "<=" | ">" | ">=" | "=="`; soft constraints take a `preference` (`minimize`, `maximize` or `range`, each with a `scale`) and an optional `weight` (default 1). Any constraint may add a `"unit"` for its limits. A stage may add `"schedule": {"from": "09:00", "to": "12:00"}`. For daytime or night only, use an `is_day` constraint (`== 1` / `== 0`).
 
 **Units.** Metrics from the shared vocabulary (`wind_speed`, `temperature`, `visibility`, ... see [`src/units.rs`](src/units.rs)) have one canonical unit each (SI-leaning: m/s, °C, mm, %, m, hPa). Adapters and unit fields convert to it; the engine itself never sees mixed units.
 

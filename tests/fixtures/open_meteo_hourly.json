@@ -2,9 +2,9 @@
   "latitude": 52.52,
   "longitude": 13.419998,
   "generationtime_ms": 0.05,
-  "utc_offset_seconds": 0,
-  "timezone": "GMT",
-  "timezone_abbreviation": "GMT",
+  "utc_offset_seconds": 7200,
+  "timezone": "Europe/Berlin",
+  "timezone_abbreviation": "CEST",
   "elevation": 38.0,
   "hourly_units": {
     "time": "unixtime",
@@ -13,15 +13,57 @@
     "precipitation": "mm",
     "wind_speed_10m": "km/h",
     "wind_gusts_10m": "m/s",
-    "visibility": "m"
+    "visibility": "m",
+    "is_day": ""
   },
   "hourly": {
-    "time": [1790064000, 1790067600, 1790071200, 1790074800],
-    "temperature_2m": [18.5, 19.0, 20.5, 22.0],
-    "precipitation_probability": [10, 15, null, 5],
-    "precipitation": [0.0, 0.0, 0.2, 0.0],
-    "wind_speed_10m": [36.0, 25.2, 18.0, 10.8],
-    "wind_gusts_10m": [15.0, 12.0, 9.5, 6.0],
-    "visibility": [24140.0, 24140.0, 18000.0, 24140.0]
+    "time": [
+      1790064000,
+      1790067600,
+      1790071200,
+      1790074800
+    ],
+    "temperature_2m": [
+      18.5,
+      19.0,
+      20.5,
+      22.0
+    ],
+    "precipitation_probability": [
+      10,
+      15,
+      null,
+      5
+    ],
+    "precipitation": [
+      0.0,
+      0.0,
+      0.2,
+      0.0
+    ],
+    "wind_speed_10m": [
+      36.0,
+      25.2,
+      18.0,
+      10.8
+    ],
+    "wind_gusts_10m": [
+      15.0,
+      12.0,
+      9.5,
+      6.0
+    ],
+    "visibility": [
+      24140.0,
+      24140.0,
+      18000.0,
+      24140.0
+    ],
+    "is_day": [
+      1,
+      1,
+      1,
+      0
+    ]
   }
 }

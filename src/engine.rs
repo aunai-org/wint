@@ -1,4 +1,5 @@
-use crate::{Comparison, Constraint, Plan, Preference, Series, ValidationError};
+use crate::schedule::{format_clock, format_offset};
+use crate::{Comparison, Constraint, Plan, Preference, Schedule, Series, ValidationError};
 
 /// One auditable observation behind a decision.
 ///
@@ -17,6 +18,10 @@ pub struct Evidence {
     pub passed: bool,
     /// Soft constraints only: penalty in `[0, 1]` for this sample.
     pub penalty: Option<f64>,
+    /// Extra human-readable detail, used where a number does not say it (for
+    /// example the local clock span for a time-of-day check).
+    #[cfg_attr(feature = "json", serde(skip_serializing_if = "Option::is_none"))]
+    pub note: Option<String>,
 }
 /// Per-stage outcome of a feasible window.
 #[derive(Clone, Debug, PartialEq)]
@@ -96,6 +101,7 @@ impl<'a> WindowSearch<'a> {
         let mut weighted_penalty = 0.0;
         let mut total_weight = 0.0;
         let mut offset = 0;
+        let offset_ms = i64::from(self.series.utc_offset_minutes) * 60_000;
         for stage in &self.plan.stages {
             let count = (stage.duration_ms / self.series.cadence_ms) as usize;
             let samples = &self.series.observations[start + offset..start + offset + count];
@@ -103,6 +109,20 @@ impl<'a> WindowSearch<'a> {
             let mut binding: Vec<Option<(f64, Evidence)>> = vec![None; stage.constraints.len()];
             let (mut stage_penalty, mut stage_weight) = (0.0, 0.0);
             for observation in samples {
+                if let Some(schedule) = &stage.schedule {
+                    let local = observation.timestamp_ms + offset_ms;
+                    if !schedule.contains_span(local, self.series.cadence_ms) {
+                        return Err(Box::new(schedule_evidence(
+                            stage,
+                            schedule,
+                            observation.timestamp_ms,
+                            local,
+                            self.series.cadence_ms,
+                            self.series.utc_offset_minutes,
+                            false,
+                        )));
+                    }
+                }
                 for (index, constraint) in stage.constraints.iter().enumerate() {
                     match constraint {
                         Constraint::Hard {
@@ -122,6 +142,7 @@ impl<'a> WindowSearch<'a> {
                                 expected: format_comparison(*comparison, *threshold),
                                 passed,
                                 penalty: None,
+                                note: None,
                             };
                             if !passed {
                                 return Err(Box::new(item));
@@ -149,6 +170,7 @@ impl<'a> WindowSearch<'a> {
                                     expected: format_preference(preference),
                                     passed: true,
                                     penalty: Some(penalty),
+                                    note: None,
                                 };
                                 keep_binding(&mut binding[index], -penalty, item);
                             }
@@ -156,6 +178,17 @@ impl<'a> WindowSearch<'a> {
                         Constraint::Soft { .. } => {}
                     }
                 }
+            }
+            if let Some(schedule) = &stage.schedule {
+                evidence.push(schedule_evidence(
+                    stage,
+                    schedule,
+                    samples[0].timestamp_ms,
+                    samples[0].timestamp_ms + offset_ms,
+                    stage.duration_ms,
+                    self.series.utc_offset_minutes,
+                    true,
+                ));
             }
             evidence.extend(binding.into_iter().flatten().map(|(_, item)| item));
             weighted_penalty += stage_penalty;
@@ -176,6 +209,39 @@ impl<'a> WindowSearch<'a> {
             stages,
             evidence,
         })
+    }
+}
+/// Evidence for a time-of-day check. `local_ms` is the span start on the local
+/// clock and `len_ms` its length; `passed` picks the pass or fail wording.
+fn schedule_evidence(
+    stage: &crate::Stage,
+    schedule: &Schedule,
+    timestamp_ms: i64,
+    local_ms: i64,
+    len_ms: i64,
+    utc_offset_minutes: i32,
+    passed: bool,
+) -> Evidence {
+    let day_minutes = 1440;
+    let start = local_ms.div_euclid(60_000).rem_euclid(day_minutes) as u16;
+    let end = (local_ms + len_ms)
+        .div_euclid(60_000)
+        .rem_euclid(day_minutes) as u16;
+    Evidence {
+        stage: stage.name.clone(),
+        constraint: "time of day".into(),
+        timestamp_ms,
+        metric: "local_time".into(),
+        actual: None,
+        expected: format!("within {schedule} local"),
+        passed,
+        penalty: None,
+        note: Some(format!(
+            "{} to {} local ({})",
+            format_clock(start),
+            format_clock(end),
+            format_offset(utc_offset_minutes)
+        )),
     }
 }
 fn suitability(weighted_penalty: f64, total_weight: f64) -> f64 {

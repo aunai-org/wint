@@ -1,3 +1,4 @@
+use crate::schedule::Schedule;
 use crate::units::{canonical_unit, Unit, UnitError};
 use std::collections::BTreeMap;
 use std::fmt;
@@ -293,6 +294,12 @@ pub struct Stage {
     pub name: String,
     pub duration_ms: i64,
     pub constraints: Vec<Constraint>,
+    /// Optional local time-of-day window the whole stage must fit inside.
+    #[cfg_attr(
+        feature = "json",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub schedule: Option<Schedule>,
 }
 impl Stage {
     pub fn new(name: impl Into<String>, duration_ms: i64, constraints: Vec<Constraint>) -> Self {
@@ -300,7 +307,13 @@ impl Stage {
             name: name.into(),
             duration_ms,
             constraints,
+            schedule: None,
         }
+    }
+    /// Restricts the stage to a local time-of-day window.
+    pub fn with_schedule(mut self, schedule: Schedule) -> Self {
+        self.schedule = Some(schedule);
+        self
     }
 }
 
@@ -329,6 +342,13 @@ impl Plan {
     }
     pub fn duration_ms(&self) -> i64 {
         self.stages.iter().map(|s| s.duration_ms).sum()
+    }
+    /// Restricts every stage to the same local time-of-day window.
+    pub fn with_schedule(mut self, schedule: Schedule) -> Self {
+        for stage in &mut self.stages {
+            stage.schedule = Some(schedule);
+        }
+        self
     }
 
     /// Checks the plan against a series cadence: at least one stage, positive
@@ -361,6 +381,9 @@ impl Plan {
 pub struct Series {
     pub cadence_ms: i64,
     pub observations: Vec<Observation>,
+    /// Offset of the data's local clock from UTC, in minutes (for example
+    /// `120` for UTC+02:00). Used only by stage [`Schedule`]s; defaults to 0.
+    pub utc_offset_minutes: i32,
 }
 /// Unvalidated wire form of [`Series`]; deserializing goes through
 /// [`Series::new`] so JSON input cannot bypass validation.
@@ -372,6 +395,9 @@ struct SeriesData {
     /// Optional source units per metric, converted to canonical on load.
     #[serde(default)]
     units: BTreeMap<String, String>,
+    /// Optional offset of the local clock from UTC, in minutes.
+    #[serde(default)]
+    utc_offset_minutes: i32,
 }
 #[cfg(feature = "json")]
 impl TryFrom<SeriesData> for Series {
@@ -385,7 +411,8 @@ impl TryFrom<SeriesData> for Series {
             })?;
             units.insert(metric, unit);
         }
-        Series::with_units(data.cadence_ms, data.observations, &units)
+        Series::with_units(data.cadence_ms, data.observations, &units)?
+            .with_utc_offset(data.utc_offset_minutes)
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -424,6 +451,10 @@ pub enum ValidationError {
         metric: String,
         symbol: String,
     },
+    /// A UTC offset outside -12:00..=+14:00.
+    InvalidUtcOffset {
+        minutes: i32,
+    },
 }
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -454,6 +485,10 @@ impl fmt::Display for ValidationError {
             Self::UnknownUnit { metric, symbol } => {
                 write!(f, "metric `{metric}`: unknown unit `{symbol}`")
             }
+            Self::InvalidUtcOffset { minutes } => write!(
+                f,
+                "UTC offset of {minutes} minutes is outside -12:00 to +14:00"
+            ),
         }
     }
 }
@@ -519,6 +554,15 @@ impl Series {
         Ok(Self {
             cadence_ms,
             observations,
+            utc_offset_minutes: 0,
         })
+    }
+    /// Sets the local clock's offset from UTC in minutes (-12:00 to +14:00).
+    pub fn with_utc_offset(mut self, minutes: i32) -> Result<Self, ValidationError> {
+        if !(-720..=840).contains(&minutes) {
+            return Err(ValidationError::InvalidUtcOffset { minutes });
+        }
+        self.utc_offset_minutes = minutes;
+        Ok(self)
     }
 }

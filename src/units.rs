@@ -16,6 +16,8 @@ pub enum Dimension {
     Pressure,
     Percent,
     Angle,
+    /// A 0/1 indicator such as `is_day`.
+    Flag,
 }
 
 /// A supported measurement unit.
@@ -41,6 +43,7 @@ pub enum Unit {
     InchesOfMercury,
     Percent,
     Degrees,
+    Flag,
 }
 
 /// `(unit, dimension, canonical symbol, accepted spellings, scale to base, offset to base)`.
@@ -208,6 +211,14 @@ const TABLE: &[UnitRow] = &[
         1.0,
         0.0,
     ),
+    (
+        Unit::Flag,
+        Dimension::Flag,
+        "0/1",
+        &["0/1", "flag"],
+        1.0,
+        0.0,
+    ),
 ];
 
 impl Unit {
@@ -305,6 +316,7 @@ pub const VOCABULARY: &[(&str, Unit, &str)] = &[
     ("visibility", Unit::Meters, "Horizontal visibility"),
     ("wave_height", Unit::Meters, "Significant wave height"),
     ("pressure", Unit::HectoPascals, "Mean sea-level pressure"),
+    ("is_day", Unit::Flag, "1 in daylight, 0 at night"),
 ];
 
 /// Canonical unit for a vocabulary metric, or `None` for a caller-defined metric.

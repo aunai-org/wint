@@ -3,7 +3,7 @@
 use env_operability::adapters::{csv, AdapterError};
 use env_operability::time::format_utc;
 use env_operability::units::canonical_unit;
-use env_operability::{presets, Plan, SearchResult, Series, WindowSearch};
+use env_operability::{presets, Evidence, Plan, Schedule, SearchResult, Series, WindowSearch};
 use std::process::ExitCode;
 
 const USAGE: &str = "\
@@ -19,6 +19,11 @@ Series (one of):
       --format <f>          json (default), csv, or open-meteo (a saved API response)
   --open-meteo <lat,lon>    Fetch a live forecast (needs a build with --features net)
       --days <n>            Forecast days to fetch, 1-16 (default 3)
+
+Time of day (local time of the data):
+  --between <HH:MM-HH:MM>   Only operate inside a daily window, e.g. 09:00-12:00,
+                            00:00-20:00 (until 8pm) or 20:00-06:00 (overnight)
+  --utc-offset <+HH:MM>     Local clock offset from UTC (default: from the data, else +00:00)
 
 Output:
   --top <n>                 Show at most n feasible windows (default 5)
@@ -58,6 +63,8 @@ enum SeriesSource {
 struct Args {
     plan: PlanSource,
     series: SeriesSource,
+    between: Option<Schedule>,
+    utc_offset: Option<i32>,
     top: usize,
     rejected: bool,
     json: bool,
@@ -72,6 +79,7 @@ enum Command {
 fn parse_args(raw: impl IntoIterator<Item = String>) -> Result<Command, String> {
     let (mut plan, mut preset, mut hours) = (None, None, 2.0);
     let (mut series, mut format, mut open_meteo, mut days) = (None, None, None, 3u32);
+    let (mut between, mut utc_offset) = (None, None);
     let (mut top, mut rejected, mut json) = (5, false, false);
     let mut args = raw.into_iter();
     while let Some(arg) = args.next() {
@@ -107,6 +115,8 @@ fn parse_args(raw: impl IntoIterator<Item = String>) -> Result<Command, String> 
                     .filter(|d| (1..=16).contains(d))
                     .ok_or("--days must be between 1 and 16")?
             }
+            "--between" => between = Some(parse_between(&value("--between")?)?),
+            "--utc-offset" => utc_offset = Some(parse_offset(&value("--utc-offset")?)?),
             "--top" => {
                 top = value("--top")?
                     .parse()
@@ -136,10 +146,41 @@ fn parse_args(raw: impl IntoIterator<Item = String>) -> Result<Command, String> 
     Ok(Command::Run(Args {
         plan,
         series,
+        between,
+        utc_offset,
         top,
         rejected,
         json,
     }))
+}
+
+/// Parses `HH:MM-HH:MM` into a daily window.
+fn parse_between(text: &str) -> Result<Schedule, String> {
+    let (from, to) = text
+        .split_once('-')
+        .ok_or("--between expects HH:MM-HH:MM, e.g. 09:00-12:00")?;
+    Schedule::parse(from, to).map_err(|e| format!("--between: {e}"))
+}
+
+/// Parses `+HH:MM`, `-HH:MM`, `Z` or `UTC` into minutes from UTC.
+fn parse_offset(text: &str) -> Result<i32, String> {
+    let bad = || "--utc-offset expects +HH:MM or -HH:MM, e.g. +02:00".to_string();
+    let text = text.trim();
+    if text.eq_ignore_ascii_case("z") || text.eq_ignore_ascii_case("utc") {
+        return Ok(0);
+    }
+    let sign = match text.chars().next() {
+        Some('+') => 1,
+        Some('-') => -1,
+        _ => return Err(bad()),
+    };
+    let (h, m) = text[1..].split_once(':').ok_or_else(bad)?;
+    let (h, m): (i32, i32) = (h.parse().map_err(|_| bad())?, m.parse().map_err(|_| bad())?);
+    let minutes = sign * (h * 60 + m);
+    if m > 59 || !(-720..=840).contains(&minutes) {
+        return Err("--utc-offset must be between -12:00 and +14:00".into());
+    }
+    Ok(minutes)
 }
 
 fn parse_coordinates(text: &str) -> Result<(f64, f64), String> {
@@ -238,8 +279,16 @@ fn load_series(source: &SeriesSource) -> Result<Series, String> {
 }
 
 fn run(args: &Args) -> Result<(), String> {
-    let plan = load_plan(&args.plan)?;
-    let series = load_series(&args.series)?;
+    let mut plan = load_plan(&args.plan)?;
+    let mut series = load_series(&args.series)?;
+    if let Some(window) = args.between {
+        plan = plan.with_schedule(window);
+    }
+    if let Some(minutes) = args.utc_offset {
+        series = series
+            .with_utc_offset(minutes)
+            .map_err(|e| format!("invalid offset: {e}"))?;
+    }
     let result = WindowSearch::new(&series, &plan)
         .run()
         .map_err(|e| format!("invalid plan: {e}"))?;
@@ -250,6 +299,15 @@ fn run(args: &Args) -> Result<(), String> {
         print_text(&plan, &series, &result, args);
     }
     Ok(())
+}
+
+/// What to print as the reading: the note for checks that are not a number
+/// (time of day), otherwise the value with its unit.
+fn show_evidence(item: &Evidence) -> String {
+    match &item.note {
+        Some(note) => note.clone(),
+        None => show(&item.metric, item.actual),
+    }
 }
 
 /// A reading with its canonical unit, e.g. `10.29 m/s`.
@@ -302,7 +360,7 @@ fn print_text(plan: &Plan, series: &Series, result: &SearchResult, args: &Args) 
                 "   - {}/{}: {} at {} (expected {})",
                 item.stage,
                 item.constraint,
-                show(&item.metric, item.actual),
+                show_evidence(item),
                 format_utc(item.timestamp_ms),
                 item.expected
             );
@@ -318,7 +376,7 @@ fn print_text(plan: &Plan, series: &Series, result: &SearchResult, args: &Args) 
                 f.stage,
                 f.constraint,
                 format_utc(f.timestamp_ms),
-                show(&f.metric, f.actual),
+                show_evidence(f),
                 f.expected
             );
         }
@@ -405,6 +463,42 @@ mod tests {
                 "{flag:?}"
             );
         }
+    }
+    #[test]
+    fn between_and_offset_are_parsed_and_validated() {
+        assert_eq!(
+            parse_between("09:00-12:00").unwrap().to_string(),
+            "09:00-12:00"
+        );
+        assert_eq!(
+            parse_between("20:00-06:00").unwrap().to_string(),
+            "20:00-06:00"
+        );
+        assert!(parse_between("09:00").is_err());
+        assert!(parse_between("09:00-09:00")
+            .unwrap_err()
+            .contains("must differ"));
+        assert!(parse_between("9am-12:00").is_err());
+        assert_eq!(parse_offset("+02:00"), Ok(120));
+        assert_eq!(parse_offset("-05:30"), Ok(-330));
+        assert_eq!(parse_offset("Z"), Ok(0));
+        assert!(parse_offset("02:00").is_err());
+        assert!(parse_offset("+15:00").is_err());
+        assert!(parse_offset("+02:75").is_err());
+        assert!(parse(&["--preset", "drone", "--series", "s", "--between", "nope"]).is_err());
+        assert!(matches!(
+            parse(&[
+                "--preset",
+                "drone",
+                "--series",
+                "s",
+                "--between",
+                "09:00-12:00",
+                "--utc-offset",
+                "+02:00"
+            ]),
+            Ok(Command::Run(_))
+        ));
     }
     #[test]
     fn values_show_canonical_units() {

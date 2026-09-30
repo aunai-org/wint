@@ -22,6 +22,8 @@ Guiding principle: get a trustworthy, explained answer from real data in minutes
 - [x] Tutorial (docs/TUTORIAL.md)
 - [x] Live Open-Meteo fetch verified from the CLI against the real API (all 11 variables, units as assumed); the `net` build trusts the OS certificate store so TLS-intercepting proxies work
 - [ ] Verify the live fetch from a real browser (demo)
+- [x] Time-of-day windows: per-stage local clock windows (incl. overnight), series UTC offset, `is_day` from Open-Meteo
+- [ ] Weekday rules ("weekends only") and per-observation UTC offsets across daylight-saving changes
 - [ ] Opt-in resampling/alignment step, only once a real use case needs it
 - [ ] Marine data (wave height) adapter, e.g. Open-Meteo Marine API
 - [ ] Review preset thresholds with domain practitioners

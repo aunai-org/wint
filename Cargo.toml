@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Deterministic, domain-neutral environmental operability window engine"
 license = "Apache-2.0 OR MIT"
-repository = "https://github.com/example/env-operability"
+repository = "https://github.com/aunai-org/wint"
 keywords = ["environment", "operability", "constraints", "scheduling"]
 categories = ["science", "algorithms"]
 

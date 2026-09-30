@@ -33,6 +33,15 @@ Observations use a regular cadence. A stage duration must be a positive multiple
 
 **Data is used as given.** The engine does not resample, interpolate, or require timestamps to sit on clock boundaries: a series may start at 08:17 as long as every step is exactly one cadence, and windows start at the observation times supplied. Adapters (CSV, Open-Meteo) pass data through unchanged for the same reason, so nothing is silently assumed. Resampling or alignment is deferred until a real use case needs it and would arrive as an explicit, opt-in adapter step.
 
+## Time of day
+
+Two separate mechanisms cover "daytime only", "until 8pm", "9am-12pm" and "overnight":
+
+- **Clock windows.** A stage may carry a `schedule` (`{"from": "09:00", "to": "12:00"}`). The whole stage must lie inside the window on the *local clock of the data*. `from` later than `to` wraps midnight (`20:00`-`06:00`); `00:00`-`20:00` means "until 8pm"; `to` may be `24:00`. Edges are half-open like every range in wint, so a 2-hour stage fits `09:00-12:00` when it starts at 09:00 or 10:00, never at 11:00. The check runs per sample interval, in time order with the other checks, so the first failure is reported with a readable note (`08:00 to 09:00 local (UTC+02:00)`). Schedules are per stage, so a survey stage can be daytime-only while recovery is unrestricted.
+- **Sunrise/sunset.** Day and night depend on place and date, so they are data, not clock windows: use the `is_day` metric (1 in daylight, 0 at night; Open-Meteo supplies it) in an ordinary hard constraint (`is_day == 1` or `== 0`). A missing value rejects the window like any other metric.
+
+The local clock is a property of where the data is, so the **series** carries `utc_offset_minutes` (default 0, range -12:00 to +14:00) and the Open-Meteo adapter fills it from the API (`timezone=auto`). Only one fixed offset is modelled: a forecast that crosses a daylight-saving change shifts by an hour after it. Weekday rules ("weekends only") are not included yet.
+
 ## Data model
 
 ```text
@@ -77,7 +86,7 @@ src/
   main.rs         CLI (requires the `json` feature; `net` adds live fetching)
 ```
 
-Key API: `Series::new(cadence_ms, observations) -> Result<Series, ValidationError>`, `Plan::single_stage(...)`, `Plan::new(...)`, and `WindowSearch::new(&series, &plan).run() -> Result<SearchResult, ValidationError>`. `run` validates the plan first (`Plan::validate`), so malformed plans are errors, never silent empty results.
+`Stage::with_schedule` / `Plan::with_schedule` attach clock windows, and `Series::with_utc_offset` sets the local clock. Key API: `Series::new(cadence_ms, observations) -> Result<Series, ValidationError>`, `Plan::single_stage(...)`, `Plan::new(...)`, and `WindowSearch::new(&series, &plan).run() -> Result<SearchResult, ValidationError>`. `run` validates the plan first (`Plan::validate`), so malformed plans are errors, never silent empty results.
 
 ## MVP v0.1 acceptance requirements
 
