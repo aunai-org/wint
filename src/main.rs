@@ -3,7 +3,10 @@
 use env_operability::adapters::{csv, AdapterError};
 use env_operability::time::format_utc;
 use env_operability::units::canonical_unit;
-use env_operability::{presets, Evidence, Plan, Schedule, SearchResult, Series, WindowSearch};
+use env_operability::{
+    presets, Ensemble, EnsembleResult, EnsembleSearch, Evidence, Plan, Schedule, SearchResult,
+    Series, WindowSearch,
+};
 use std::process::ExitCode;
 
 const USAGE: &str = "\
@@ -16,14 +19,23 @@ Plan (one of):
 
 Series (one of):
   --series <file>           Series file; format from extension (.csv) or --format
-      --format <f>          json (default), csv, or open-meteo (a saved API response)
+      --format <f>          json (default), csv, open-meteo (a saved API response),
+                            open-meteo-ensemble (a saved multi-model or ensemble response)
+                            or ensemble-json
   --open-meteo <lat,lon>    Fetch a live forecast (needs a build with --features net)
       --days <n>            Forecast days to fetch, 1-16 (default 3)
+      --models <a,b,..>     Fetch several weather models, e.g. ecmwf_ifs025,gfs_seamless
+      --ensemble <model>    Fetch an ensemble (about 40 members), e.g. icon_seamless
 
 Time of day (local time of the data):
   --between <HH:MM-HH:MM>   Only operate inside a daily window, e.g. 09:00-12:00,
                             00:00-20:00 (until 8pm) or 20:00-06:00 (overnight)
   --utc-offset <+HH:MM>     Local clock offset from UTC (default: from the data, else +00:00)
+
+Several forecast versions (models or ensemble members) report 'fits in k of n':
+  --min-agreement <0-1>     Share of answering members a window must fit (default 1)
+  --min-coverage <0-1>      Share of all members that must be able to answer (default 0.5)
+  Agreement is not a probability: models are not independent and members are not calibrated.
 
 Output:
   --top <n>                 Show at most n feasible windows (default 5)
@@ -41,6 +53,21 @@ enum Format {
     Json,
     Csv,
     OpenMeteo,
+    OpenMeteoEnsemble,
+    EnsembleJson,
+}
+
+/// Which Open-Meteo service and how many forecast versions to fetch.
+enum Versions {
+    Single,
+    Models(Vec<String>),
+    Ensemble(Vec<String>),
+}
+
+/// A single series or several forecast versions.
+enum Data {
+    Single(Series),
+    Many(Ensemble),
 }
 
 enum PlanSource {
@@ -57,6 +84,7 @@ enum SeriesSource {
         latitude: f64,
         longitude: f64,
         days: u32,
+        versions: Versions,
     },
 }
 
@@ -65,6 +93,8 @@ struct Args {
     series: SeriesSource,
     between: Option<Schedule>,
     utc_offset: Option<i32>,
+    min_agreement: Option<f64>,
+    min_coverage: Option<f64>,
     top: usize,
     rejected: bool,
     json: bool,
@@ -80,6 +110,8 @@ fn parse_args(raw: impl IntoIterator<Item = String>) -> Result<Command, String> 
     let (mut plan, mut preset, mut hours) = (None, None, 2.0);
     let (mut series, mut format, mut open_meteo, mut days) = (None, None, None, 3u32);
     let (mut between, mut utc_offset) = (None, None);
+    let (mut models, mut ensemble) = (None, None);
+    let (mut min_agreement, mut min_coverage) = (None, None);
     let (mut top, mut rejected, mut json) = (5, false, false);
     let mut args = raw.into_iter();
     while let Some(arg) = args.next() {
@@ -102,8 +134,12 @@ fn parse_args(raw: impl IntoIterator<Item = String>) -> Result<Command, String> 
                     "json" => Format::Json,
                     "csv" => Format::Csv,
                     "open-meteo" => Format::OpenMeteo,
+                    "open-meteo-ensemble" => Format::OpenMeteoEnsemble,
+                    "ensemble-json" => Format::EnsembleJson,
                     other => {
-                        return Err(format!("unknown format `{other}` (json, csv, open-meteo)"))
+                        return Err(format!(
+                            "unknown format `{other}` (json, csv, open-meteo, open-meteo-ensemble, ensemble-json)"
+                        ))
                     }
                 })
             }
@@ -114,6 +150,14 @@ fn parse_args(raw: impl IntoIterator<Item = String>) -> Result<Command, String> 
                     .ok()
                     .filter(|d| (1..=16).contains(d))
                     .ok_or("--days must be between 1 and 16")?
+            }
+            "--models" => models = Some(parse_list("--models", &value("--models")?)?),
+            "--ensemble" => ensemble = Some(parse_list("--ensemble", &value("--ensemble")?)?),
+            "--min-agreement" => {
+                min_agreement = Some(parse_fraction("--min-agreement", &value("--min-agreement")?)?)
+            }
+            "--min-coverage" => {
+                min_coverage = Some(parse_fraction("--min-coverage", &value("--min-coverage")?)?)
             }
             "--between" => between = Some(parse_between(&value("--between")?)?),
             "--utc-offset" => utc_offset = Some(parse_offset(&value("--utc-offset")?)?),
@@ -133,6 +177,17 @@ fn parse_args(raw: impl IntoIterator<Item = String>) -> Result<Command, String> 
         (None, Some(name)) => PlanSource::Preset { name, hours },
         (None, None) => return Err("--plan or --preset is required".into()),
     };
+    let versions = match (models, ensemble) {
+        (Some(_), Some(_)) => return Err("use either --models or --ensemble, not both".into()),
+        (Some(list), None) => Versions::Models(list),
+        (None, Some(list)) => Versions::Ensemble(list),
+        (None, None) => Versions::Single,
+    };
+    if open_meteo.is_none() && !matches!(versions, Versions::Single) {
+        return Err(
+            "--models and --ensemble fetch from Open-Meteo, so they need --open-meteo".into(),
+        );
+    }
     let series = match (series, open_meteo) {
         (Some(_), Some(_)) => return Err("use either --series or --open-meteo, not both".into()),
         (Some(path), None) => SeriesSource::File { path, format },
@@ -140,6 +195,7 @@ fn parse_args(raw: impl IntoIterator<Item = String>) -> Result<Command, String> 
             latitude,
             longitude,
             days,
+            versions,
         },
         (None, None) => return Err("--series or --open-meteo is required".into()),
     };
@@ -148,10 +204,29 @@ fn parse_args(raw: impl IntoIterator<Item = String>) -> Result<Command, String> 
         series,
         between,
         utc_offset,
+        min_agreement,
+        min_coverage,
         top,
         rejected,
         json,
     }))
+}
+
+/// Parses a comma-separated list such as `ecmwf_ifs025,gfs_seamless`.
+fn parse_list(flag: &str, text: &str) -> Result<Vec<String>, String> {
+    let items: Vec<String> = text.split(',').map(|s| s.trim().to_string()).collect();
+    if items.iter().any(String::is_empty) {
+        return Err(format!("{flag} expects a comma-separated list, e.g. a,b"));
+    }
+    Ok(items)
+}
+
+/// Parses a number in (0, 1].
+fn parse_fraction(flag: &str, text: &str) -> Result<f64, String> {
+    text.parse()
+        .ok()
+        .filter(|v: &f64| *v > 0.0 && *v <= 1.0)
+        .ok_or_else(|| format!("{flag} must be greater than 0 and at most 1"))
 }
 
 /// Parses `HH:MM-HH:MM` into a daily window.
@@ -244,19 +319,34 @@ fn adapter_error(what: &str, error: AdapterError) -> String {
     format!("cannot load {what}: {error}")
 }
 
-fn load_series(source: &SeriesSource) -> Result<Series, String> {
+fn load_data(source: &SeriesSource) -> Result<Data, String> {
+    use env_operability::adapters::open_meteo as om;
     match source {
         SeriesSource::OpenMeteo {
             latitude,
             longitude,
             days,
-        } => {
-            let body = fetch(&env_operability::adapters::open_meteo::request_url(
-                *latitude, *longitude, *days,
-            ))?;
-            env_operability::adapters::open_meteo::parse(&body)
-                .map_err(|e| adapter_error("forecast", e))
-        }
+            versions,
+        } => match versions {
+            Versions::Single => {
+                let body = fetch(&om::request_url(*latitude, *longitude, *days))?;
+                om::parse(&body)
+                    .map(Data::Single)
+                    .map_err(|e| adapter_error("forecast", e))
+            }
+            Versions::Models(list) | Versions::Ensemble(list) => {
+                let names: Vec<&str> = list.iter().map(String::as_str).collect();
+                let url = if matches!(versions, Versions::Models(_)) {
+                    om::multi_model_url(*latitude, *longitude, *days, &names)
+                } else {
+                    om::ensemble_url(*latitude, *longitude, *days, &names)
+                }
+                .map_err(|e| adapter_error("request", e))?;
+                om::parse_ensemble(&fetch(&url)?)
+                    .map(Data::Many)
+                    .map_err(|e| adapter_error("forecast", e))
+            }
+        },
         SeriesSource::File { path, format } => {
             let format = format.unwrap_or(if path.ends_with(".csv") {
                 Format::Csv
@@ -264,15 +354,23 @@ fn load_series(source: &SeriesSource) -> Result<Series, String> {
                 Format::Json
             });
             let text = read(path, "series")?;
+            let at = format!("`{path}`");
             match format {
-                Format::Csv => {
-                    csv::parse(&text).map_err(|e| adapter_error(&format!("`{path}`"), e))
-                }
-                Format::OpenMeteo => env_operability::adapters::open_meteo::parse(&text)
-                    .map_err(|e| adapter_error(&format!("`{path}`"), e)),
-                Format::Json => {
-                    serde_json::from_str(&text).map_err(|e| format!("invalid series `{path}`: {e}"))
-                }
+                Format::Csv => csv::parse(&text)
+                    .map(Data::Single)
+                    .map_err(|e| adapter_error(&at, e)),
+                Format::OpenMeteo => om::parse(&text)
+                    .map(Data::Single)
+                    .map_err(|e| adapter_error(&at, e)),
+                Format::OpenMeteoEnsemble => om::parse_ensemble(&text)
+                    .map(Data::Many)
+                    .map_err(|e| adapter_error(&at, e)),
+                Format::Json => serde_json::from_str(&text)
+                    .map(Data::Single)
+                    .map_err(|e| format!("invalid series `{path}`: {e}")),
+                Format::EnsembleJson => serde_json::from_str(&text)
+                    .map(Data::Many)
+                    .map_err(|e| format!("invalid ensemble `{path}`: {e}")),
             }
         }
     }
@@ -280,23 +378,54 @@ fn load_series(source: &SeriesSource) -> Result<Series, String> {
 
 fn run(args: &Args) -> Result<(), String> {
     let mut plan = load_plan(&args.plan)?;
-    let mut series = load_series(&args.series)?;
+    let mut data = load_data(&args.series)?;
     if let Some(window) = args.between {
         plan = plan.with_schedule(window);
     }
     if let Some(minutes) = args.utc_offset {
-        series = series
-            .with_utc_offset(minutes)
-            .map_err(|e| format!("invalid offset: {e}"))?;
+        let bad = |e| format!("invalid offset: {e}");
+        data = match data {
+            Data::Single(s) => Data::Single(s.with_utc_offset(minutes).map_err(bad)?),
+            Data::Many(mut e) => {
+                for member in &mut e.members {
+                    member.series = member
+                        .series
+                        .clone()
+                        .with_utc_offset(minutes)
+                        .map_err(bad)?;
+                }
+                Data::Many(e)
+            }
+        };
     }
-    let result = WindowSearch::new(&series, &plan)
-        .run()
-        .map_err(|e| format!("invalid plan: {e}"))?;
-    if args.json {
-        let out = serde_json::to_string_pretty(&result).map_err(|e| e.to_string())?;
-        println!("{out}");
-    } else {
-        print_text(&plan, &series, &result, args);
+    match data {
+        Data::Single(series) => {
+            if args.min_agreement.is_some() || args.min_coverage.is_some() {
+                return Err("--min-agreement and --min-coverage apply only to several forecast versions (--models, --ensemble or an ensemble file)".into());
+            }
+            let result = WindowSearch::new(&series, &plan)
+                .run()
+                .map_err(|e| format!("invalid plan: {e}"))?;
+            if args.json {
+                let out = serde_json::to_string_pretty(&result).map_err(|e| e.to_string())?;
+                println!("{out}");
+            } else {
+                print_text(&plan, &series, &result, args);
+            }
+        }
+        Data::Many(ensemble) => {
+            let result = EnsembleSearch::new(&ensemble, &plan)
+                .min_agreement(args.min_agreement.unwrap_or(1.0))
+                .min_coverage(args.min_coverage.unwrap_or(0.5))
+                .run()
+                .map_err(|e| format!("invalid search: {e}"))?;
+            if args.json {
+                let out = serde_json::to_string_pretty(&result).map_err(|e| e.to_string())?;
+                println!("{out}");
+            } else {
+                print_ensemble(&plan, &ensemble, &result, args);
+            }
+        }
     }
     Ok(())
 }
@@ -379,6 +508,120 @@ fn print_text(plan: &Plan, series: &Series, result: &SearchResult, args: &Args) 
                 show_evidence(f),
                 f.expected
             );
+        }
+    }
+}
+
+fn plural(n: usize, one: &str, many: &str) -> String {
+    format!("{n} {}", if n == 1 { one } else { many })
+}
+
+fn print_ensemble(plan: &Plan, ensemble: &Ensemble, result: &EnsembleResult, args: &Args) {
+    let grid = ensemble.grid();
+    let first = grid.observations.first().map_or(0, |o| o.timestamp_ms);
+    let last = grid.observations.last().map_or(0, |o| o.timestamp_ms) + grid.cadence_ms;
+    let meeting = result
+        .windows
+        .iter()
+        .filter(|w| w.meets_requirement)
+        .count();
+    println!(
+        "Plan `{}` over data {} -> {}, {} forecast versions ({})",
+        plan.name,
+        format_utc(first),
+        format_utc(last),
+        result.members.len(),
+        if result.members.len() <= 6 {
+            result.members.join(", ")
+        } else {
+            format!(
+                "{}, ... {}",
+                result.members[..3].join(", "),
+                result.members.last().unwrap()
+            )
+        }
+    );
+    println!(
+        "Requirement: fits in {:.0}% of the members that can answer, and at least {:.0}% of all members can answer.",
+        result.min_agreement * 100.0,
+        result.min_coverage * 100.0
+    );
+    println!(
+        "{} of {} windows meet it. \"Fits in k of n\" counts forecast versions; it is not a probability.",
+        meeting,
+        result.windows.len()
+    );
+    // Metrics that no member provides cannot be judged by any rule that uses them.
+    let mut absent: Vec<&str> = result
+        .windows
+        .iter()
+        .flat_map(|w| w.missing.iter())
+        .filter(|m| m.members == result.members.len())
+        .map(|m| m.metric.as_str())
+        .collect();
+    absent.sort_unstable();
+    absent.dedup();
+    if !absent.is_empty() {
+        println!(
+            "Note: no forecast version provides {}, so rules on it cannot be judged. Relax those rules or use data that includes them.",
+            absent.join(", ")
+        );
+    }
+    if meeting == 0 && !result.windows.is_empty() {
+        println!("No window meets the requirement; closest first.");
+    }
+    for (rank, w) in result.windows.iter().take(args.top).enumerate() {
+        let answering = w.feasible + w.infeasible;
+        println!(
+            "\n#{} {} -> {}  {}",
+            rank + 1,
+            format_utc(w.start_ms),
+            format_utc(w.end_ms),
+            if w.meets_requirement {
+                "meets the requirement"
+            } else {
+                "does not meet the requirement"
+            }
+        );
+        match w.agreement {
+            Some(_) => println!("   fits in {} of {} that can answer", w.feasible, answering),
+            None => println!("   no forecast version could answer"),
+        }
+        if w.unknown > 0 {
+            let what: Vec<String> = w
+                .missing
+                .iter()
+                .map(|m| {
+                    format!(
+                        "{} for {}",
+                        m.metric,
+                        plural(m.members, "member", "members")
+                    )
+                })
+                .collect();
+            println!("   cannot say: {} ({})", w.unknown, what.join(", "));
+        }
+        if let Some(s) = w.suitability {
+            println!("   preference score {s:.2} (mean over the members where it fits)");
+        }
+        for b in &w.blockers {
+            println!(
+                "   blocked by {}/{} in {}",
+                b.stage,
+                b.constraint,
+                plural(b.members, "member", "members")
+            );
+        }
+    }
+    if args.rejected {
+        println!("\nPer-member verdicts for the windows listed above:");
+        for w in result.windows.iter().take(args.top) {
+            let cells: Vec<String> = w
+                .outcomes
+                .iter()
+                .map(|o| format!("{}={}", o.member, format!("{:?}", o.verdict).to_lowercase()))
+                .collect();
+            println!("   {}: {}", format_utc(w.start_ms), cells.join(" "));
         }
     }
 }
@@ -499,6 +742,71 @@ mod tests {
             ]),
             Ok(Command::Run(_))
         ));
+    }
+    #[test]
+    fn ensemble_flags_are_parsed_and_validated() {
+        let ok = parse(&[
+            "--preset",
+            "drone",
+            "--open-meteo",
+            "1,2",
+            "--models",
+            "a_b,c",
+        ]);
+        assert!(matches!(ok, Ok(Command::Run(_))));
+        assert!(matches!(
+            parse(&[
+                "--preset",
+                "drone",
+                "--open-meteo",
+                "1,2",
+                "--ensemble",
+                "icon_seamless",
+                "--min-agreement",
+                "0.8",
+                "--min-coverage",
+                "1"
+            ]),
+            Ok(Command::Run(_))
+        ));
+        // Fetch flags need a place to fetch for, and cannot be combined.
+        assert!(parse(&["--preset", "drone", "--series", "s", "--models", "a"]).is_err());
+        assert!(parse(&[
+            "--preset",
+            "drone",
+            "--open-meteo",
+            "1,2",
+            "--models",
+            "a",
+            "--ensemble",
+            "b"
+        ])
+        .is_err());
+        assert!(parse(&[
+            "--preset",
+            "drone",
+            "--open-meteo",
+            "1,2",
+            "--models",
+            "a,,b"
+        ])
+        .is_err());
+        for bad in ["0", "1.5", "-1", "x", "NaN"] {
+            assert!(
+                parse(&["--preset", "drone", "--series", "s", "--min-agreement", bad]).is_err(),
+                "{bad}"
+            );
+        }
+        assert!(parse(&[
+            "--preset",
+            "drone",
+            "--series",
+            "s",
+            "--format",
+            "open-meteo-ensemble"
+        ])
+        .is_ok());
+        assert!(parse(&["--preset", "drone", "--series", "s", "--format", "nope"]).is_err());
     }
     #[test]
     fn values_show_canonical_units() {

@@ -44,10 +44,11 @@ Uncertainty first, then the smaller items.
 - [x] SPEC wording rules: agreement is not a probability
 
 **M4.2 Data: multi-model and ensemble input**
-- [ ] Open-Meteo multi-model forecast adapter (`models=` returns per-model keys; some models omit variables or end early, both handled as "cannot say")
-- [ ] Open-Meteo ensemble API adapter (about 40 members; its visibility unit comes back as `undefined`, needs handling)
-- [ ] CLI: `--models`, `--min-agreement`, ensemble output
-- [ ] Verify live against the real APIs
+- [x] Open-Meteo multi-model forecast adapter (`models=` returns per-model keys; some models omit variables or end early, both handled as "cannot say")
+- [x] Open-Meteo ensemble API adapter (31-51 members; shared `is_day`; all-null columns with unit `undefined` skipped, real values with an unknown unit are an error)
+- [x] CLI: `--models`, `--ensemble`, `--min-agreement`, `--min-coverage`, ensemble report, saved-response formats
+- [x] Verified live against the real multi-model and ensemble APIs, and fixtures are trimmed real responses
+- [ ] Ensemble service lacks visibility and rain probability: consider a second source for those, or presets with ensemble-friendly rules
 
 **M4.3 Reach and demo**
 - [ ] WASM: ensemble search; npm-ready package

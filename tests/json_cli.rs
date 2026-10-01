@@ -210,3 +210,176 @@ fn cli_reports_adapter_errors_with_location() {
     assert_eq!(bad.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&bad.stderr).contains("invalid series"));
 }
+
+const MULTI_MODEL: &str = "tests/fixtures/open_meteo_multi_model.json";
+const ENSEMBLE: &str = "tests/fixtures/open_meteo_ensemble.json";
+
+fn ensemble_cli(preset: &str, file: &str, extra: &[&str]) -> std::process::Output {
+    let mut args = vec![
+        "--preset",
+        preset,
+        "--hours",
+        "2",
+        "--series",
+        file,
+        "--format",
+        "open-meteo-ensemble",
+    ];
+    args.extend_from_slice(extra);
+    run_cli(&args)
+}
+
+#[test]
+fn cli_reports_agreement_across_real_multi_model_data() {
+    let out = ensemble_cli("drone", MULTI_MODEL, &["--top", "3"]);
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let text = String::from_utf8(out.stdout).unwrap();
+    assert!(
+        text.contains(
+            "4 forecast versions (ecmwf_ifs025, gfs_seamless, icon_seamless, meteofrance_seamless)"
+        ),
+        "{text}"
+    );
+    assert!(
+        text.contains("it is not a probability"),
+        "the wording rule must be printed: {text}"
+    );
+    // The two models without visibility abstain, and are named.
+    assert!(text.contains("fits in 2 of 2 that can answer"), "{text}");
+    assert!(
+        text.contains("cannot say: 2 (visibility for 2 members)"),
+        "{text}"
+    );
+    // Never presented as a chance.
+    assert!(
+        !text.contains("chance") && !text.contains("probability of"),
+        "{text}"
+    );
+}
+
+#[test]
+fn cli_ensemble_json_output_and_requirements() {
+    let out = ensemble_cli(
+        "field-work",
+        ENSEMBLE,
+        &["--json", "--min-agreement", "0.5"],
+    );
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let value: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!(value["members"].as_array().unwrap().len(), 6);
+    assert_eq!(value["members"][0], "control");
+    assert_eq!(value["min_agreement"], 0.5);
+    assert_eq!(value["min_coverage"], 0.5);
+    let first = &value["windows"][0];
+    assert_eq!(first["members_total"], 6);
+    assert_eq!(first["outcomes"].as_array().unwrap().len(), 6);
+    assert!(first["agreement"].is_number() && first["coverage"] == 1.0);
+}
+
+#[test]
+fn cli_says_when_no_member_provides_a_metric() {
+    // The ensemble service returns no visibility, and the drone preset has a visibility rule.
+    let out = ensemble_cli("drone", ENSEMBLE, &["--top", "1"]);
+    let text = String::from_utf8(out.stdout).unwrap();
+    assert!(
+        text.contains("Note: no forecast version provides visibility"),
+        "{text}"
+    );
+    assert!(
+        text.contains("0 of") && text.contains("windows meet it"),
+        "{text}"
+    );
+}
+
+#[test]
+fn cli_reads_native_ensemble_json_and_validates_flags() {
+    use env_operability::{Ensemble, Member, Observation, Series};
+    let member = |name: &str, wind: f64| Member {
+        name: name.into(),
+        series: Series::new(
+            3_600_000,
+            (0..3)
+                .map(|i| Observation::at(i * 3_600_000).with("wind_speed", wind))
+                .collect(),
+        )
+        .unwrap(),
+    };
+    let ensemble = Ensemble::new(vec![member("calm", 2.0), member("gusty", 20.0)]).unwrap();
+    let dir = std::env::temp_dir().join(format!("wint-cli-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("ensemble.json");
+    std::fs::write(&path, serde_json::to_string(&ensemble).unwrap()).unwrap();
+    let plan = r#"{"name":"calm only","stages":[{"name":"s","duration_ms":3600000,"constraints":[
+        {"type":"hard","name":"wind","metric":"wind_speed","comparison":"<","threshold":10}]}]}"#;
+    let plan_path = dir.join("plan.json");
+    std::fs::write(&plan_path, plan).unwrap();
+    let out = run_cli(&[
+        "--plan",
+        plan_path.to_str().unwrap(),
+        "--series",
+        path.to_str().unwrap(),
+        "--format",
+        "ensemble-json",
+        "--min-agreement",
+        "0.5",
+    ]);
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let text = String::from_utf8(out.stdout).unwrap();
+    assert!(
+        text.contains("fits in 1 of 2 that can answer")
+            && text.contains("blocked by s/wind in 1 member"),
+        "{text}"
+    );
+    assert!(
+        text.contains("meets the requirement"),
+        "min-agreement 0.5 is met by 1 of 2: {text}"
+    );
+    // --min-agreement on a plain series, an out-of-range value, and an invalid ensemble are all clear errors.
+    let single = run_cli(&[
+        "--preset",
+        "drone",
+        "--series",
+        "examples/series.csv",
+        "--min-agreement",
+        "0.8",
+    ]);
+    assert_eq!(single.status.code(), Some(1));
+    assert!(
+        String::from_utf8_lossy(&single.stderr).contains("apply only to several forecast versions")
+    );
+    let range = run_cli(&[
+        "--preset",
+        "drone",
+        "--series",
+        path.to_str().unwrap(),
+        "--format",
+        "ensemble-json",
+        "--min-agreement",
+        "1.5",
+    ]);
+    assert_eq!(range.status.code(), Some(2));
+    std::fs::write(&path, r#"{"members":[]}"#).unwrap();
+    let bad = run_cli(&[
+        "--preset",
+        "drone",
+        "--series",
+        path.to_str().unwrap(),
+        "--format",
+        "ensemble-json",
+    ]);
+    assert_eq!(bad.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&bad.stderr).contains("no members"));
+    std::fs::remove_dir_all(&dir).ok();
+}

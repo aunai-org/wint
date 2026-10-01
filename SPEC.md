@@ -60,6 +60,8 @@ Per window the result reports `fits`, `does not fit` and `cannot say` counts; **
 
 Members must share cadence, timestamps and UTC offset exactly (`Ensemble::new` checks this), so that a window is the same span of time in every member.
 
+**Open-Meteo input.** `adapters::open_meteo::parse_ensemble` reads both services that return parallel versions. The *multi-model* forecast (`models=a,b,c`) names columns `<variable>_<model>`; the *ensemble* API names them `<variable>_member01` and so on, plus an unsuffixed control run. A variable with a single unsuffixed column (`is_day`) is shared by every member. A column that is entirely `null` carries no readings and is skipped (the ensemble API returns visibility and rain probability this way, with the unit `undefined`); a column with real values and an unrecognised unit is an error, never a guess. The consequence is visible and intended: rules that use a metric nobody provides cannot be judged, every window reports "cannot say", and the tools say so by name instead of silently passing or failing. Real examples seen at the time of writing: in a 4-model forecast ECMWF and Meteo-France provided no visibility; the ensemble API provided none for any member.
+
 ## Data model
 
 ```text

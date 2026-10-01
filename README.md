@@ -21,6 +21,8 @@ cargo run --features net -- --preset drone --hours 2 --open-meteo 52.52,13.41
 cargo run --features json -- --list-presets
 ```
 
+Several forecast versions: `--models ecmwf_ifs025,gfs_seamless,icon_seamless` fetches several weather models, `--ensemble icon_seamless` fetches an ensemble (about 40 members), and saved responses are read with `--format open-meteo-ensemble`. The report says "fits in k of n" and names what blocked each window and which metrics some models lack; `--min-agreement` (default 1: every model that can answer) and `--min-coverage` (default 0.5) set the requirement. Agreement is **not** a probability.
+
 Options: `--top <n>`, `--rejected` (why each rejected window failed), `--json` (full result), `--between 09:00-12:00` (only operate inside a daily window of the data's local time; `20:00-06:00` wraps midnight, `00:00-20:00` means until 8pm) and `--utc-offset +02:00` (the local clock; Open-Meteo data already carries it). New here? Follow the [tutorial](docs/TUTORIAL.md). Input formats:
 
 - **Series JSON** `{cadence_ms, units?, observations: [{timestamp_ms, values}]}`, **series CSV** (see [`examples/series.csv`](examples/series.csv)), or a saved **Open-Meteo** response (`--format open-meteo`). All are validated and converted to canonical units.

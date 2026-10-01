@@ -63,8 +63,19 @@ rejected 2026-09-22T10:00Z: operation/no precipitation at 2026-09-22T10:00Z: 0.2
 
 (That run used a 2-hour operation; `--hours 1` would find two feasible windows in the same data.) Each rejection names the first limit that failed, when, and by how much. For a feasible window, the evidence shows the *binding* reading for each constraint, the one closest to its limit, so you can see how much margin you actually had. Use `--json` for the full machine-readable result.
 
+## 5. How sure is the forecast? Compare models
+
+One forecast hides disagreement between weather models. Ask several at once:
+
+```sh
+cargo run --features net -- --preset field-work --hours 3 --open-meteo 52.52,13.41 \
+  --models ecmwf_ifs025,gfs_seamless,icon_seamless,meteofrance_seamless
+```
+
+Each window reports how many models it fits ("fits in 3 of 4 that can answer"), which rule blocked the others, and which models could not answer at all (a model may not provide visibility, or its forecast may end early). Use `--ensemble icon_seamless` for about 40 ensemble members instead. Two cautions: this is a count of forecast versions, not a probability, because models share data and are not independent; and the ensemble service does not provide visibility or rain probability, so presets with rules on those say so instead of guessing.
+
 ## What to remember
 
 - The score ranks windows that already pass every hard limit. It is not a probability, and not a safety certification.
-- Forecasts are uncertain. This version treats forecast values as exact; uncertainty handling is on the [roadmap](../ROADMAP.md).
+- Forecasts are uncertain. A single forecast is treated as exact; compare several models or an ensemble (section 5) to see where they disagree.
 - A missing reading (a `null` in the API, an empty CSV cell) fails any hard limit on that metric rather than passing silently.
