@@ -35,6 +35,25 @@ Guiding principle: get a trustworthy, explained answer from real data in minutes
 - [ ] Host the demo (e.g. GitHub Pages) and verify live forecasts from a browser
 - [ ] Python bindings
 
-## M4 - Depth
-- [ ] Uncertainty and multi-model agreement
-- [ ] Temporal predicates and gaps; stable schemas
+## M4 - Depth (branch `mile4`)
+Uncertainty first, then the smaller items.
+
+**M4.1 Engine: ensembles and agreement**
+- [x] `Ensemble` / `EnsembleSearch`: per-window agreement across members, three verdicts (fits / does not fit / cannot say), coverage, blockers, missing data, explicit `min_agreement` and `min_coverage`
+- [x] Tolerant missing-reading mode so abstaining members are not counted as disagreement
+- [x] SPEC wording rules: agreement is not a probability
+
+**M4.2 Data: multi-model and ensemble input**
+- [ ] Open-Meteo multi-model forecast adapter (`models=` returns per-model keys; some models omit variables or end early, both handled as "cannot say")
+- [ ] Open-Meteo ensemble API adapter (about 40 members; its visibility unit comes back as `undefined`, needs handling)
+- [ ] CLI: `--models`, `--min-agreement`, ensemble output
+- [ ] Verify live against the real APIs
+
+**M4.3 Reach and demo**
+- [ ] WASM: ensemble search; npm-ready package
+- [ ] Demo (branch `mile4` in wint-demo): agreement colours on the rail and strip, "fits in k of n", spread bands on the chart, per-model lines, what blocked each window
+
+**M4.4 Remaining**
+- [ ] Temporal predicates and gaps between stages
+- [ ] Stable schemas and API (freeze JSON formats and the Rust/JS interfaces)
+- [ ] Weekday rules; daylight-saving-aware offsets

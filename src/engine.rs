@@ -66,6 +66,15 @@ impl<'a> WindowSearch<'a> {
     /// Runs the search. Returns an error if the plan is invalid for this
     /// series; a series shorter than the plan yields an empty result.
     pub fn run(&self) -> Result<SearchResult, ValidationError> {
+        self.run_with(false)
+    }
+    /// Like [`run`](Self::run), but a missing reading does not stop the scan of a window: a definite
+    /// violation later in the window is reported in preference, and the window fails on the missing
+    /// reading only if nothing else does. Ensembles use this to tell "does not fit" from "cannot say".
+    pub(crate) fn run_tolerant(&self) -> Result<SearchResult, ValidationError> {
+        self.run_with(true)
+    }
+    fn run_with(&self, tolerate_missing: bool) -> Result<SearchResult, ValidationError> {
         self.plan.validate(self.series.cadence_ms)?;
         let samples = (self.plan.duration_ms() / self.series.cadence_ms) as usize;
         let mut result = SearchResult::default();
@@ -75,7 +84,7 @@ impl<'a> WindowSearch<'a> {
         for start_index in 0..=self.series.observations.len() - samples {
             let start_ms = self.series.observations[start_index].timestamp_ms;
             let end_ms = start_ms + self.plan.duration_ms();
-            match self.evaluate(start_index) {
+            match self.evaluate(start_index, tolerate_missing) {
                 Ok(window) => result.feasible.push(WindowResult {
                     start_ms,
                     end_ms,
@@ -95,7 +104,13 @@ impl<'a> WindowSearch<'a> {
         });
         Ok(result)
     }
-    fn evaluate(&self, start: usize) -> Result<WindowResult, Box<Evidence>> {
+    fn evaluate(
+        &self,
+        start: usize,
+        tolerate_missing: bool,
+    ) -> Result<WindowResult, Box<Evidence>> {
+        // First missing reading seen while tolerating them (see `run_tolerant`).
+        let mut deferred_missing: Option<Evidence> = None;
         let mut evidence = Vec::new();
         let mut stages = Vec::new();
         let mut weighted_penalty = 0.0;
@@ -145,6 +160,10 @@ impl<'a> WindowSearch<'a> {
                                 note: None,
                             };
                             if !passed {
+                                if tolerate_missing && actual.is_none() {
+                                    deferred_missing.get_or_insert(item);
+                                    continue;
+                                }
                                 return Err(Box::new(item));
                             }
                             let margin =
@@ -201,6 +220,9 @@ impl<'a> WindowSearch<'a> {
                 suitability: suitability(stage_penalty, stage_weight),
             });
             offset += count;
+        }
+        if let Some(item) = deferred_missing {
+            return Err(Box::new(item));
         }
         Ok(WindowResult {
             start_ms: 0,

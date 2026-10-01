@@ -42,6 +42,24 @@ Two separate mechanisms cover "daytime only", "until 8pm", "9am-12pm" and "overn
 
 The local clock is a property of where the data is, so the **series** carries `utc_offset_minutes` (default 0, range -12:00 to +14:00) and the Open-Meteo adapter fills it from the API (`timezone=auto`). Only one fixed offset is modelled: a forecast that crosses a daylight-saving change shifts by an hour after it. Weekday rules ("weekends only") are not included yet.
 
+## Uncertainty: ensembles and agreement
+
+A forecast is an estimate, so "the window fits" depends on which forecast you believe. An **ensemble** is several parallel versions of one forecast on a shared time grid: different weather models, or the members of one model's ensemble. `EnsembleSearch` runs the ordinary window search on every member and reports, per window, how many members it fits.
+
+Each member gives a window one of three **verdicts**:
+
+- **fits**: every hard constraint passes in that member;
+- **does not fit**: some hard constraint, or the time-of-day check, is violated;
+- **cannot say**: the member lacks a reading the plan needs (a model that does not forecast visibility, or whose horizon ends before the window) and nothing else rules the window out. A definite violation elsewhere in the window still counts as "does not fit".
+
+"Cannot say" is not disagreement. A single series with a missing reading still fails (missing data is never a silent pass), but in an ensemble an abstaining member simply does not vote, and the gap is shown as **coverage**.
+
+Per window the result reports `fits`, `does not fit` and `cannot say` counts; **agreement** = fits / (fits + does not fit), absent if nobody could answer; **coverage** = members that could answer / all members; the mean preference score over the members where it fits; the **blockers** (which rules ruled it out, and in how many members) and the **missing data** (which metrics some members lacked). A window **meets the requirement** when agreement is at least `min_agreement` (default 1.0: every member that can answer) and coverage is at least `min_coverage` (default 0.5). Both are explicit and must be in (0, 1]. Windows are ordered by: meets the requirement, agreement, coverage, preference score, earliest start. Windows that fail are kept in the list, because "fits in 4 of 5 models" is useful information.
+
+**What agreement is not.** It is not the probability that the operation will be possible. Ensemble members are not calibrated frequencies, different models share data and assumptions so they are not independent, and an ensemble can be too narrow. Always present it as "fits in `k` of `n`" and never as a percentage chance. All members are weighted equally.
+
+Members must share cadence, timestamps and UTC offset exactly (`Ensemble::new` checks this), so that a window is the same span of time in every member.
+
 ## Data model
 
 ```text

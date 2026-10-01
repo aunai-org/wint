@@ -50,6 +50,18 @@ const result = JSON.parse(search(series, presetPlan('drone', 2)));
 
 Also exported: `parseCsv`, `listPresets`, `listMetrics`, `version`. Errors are thrown as readable messages. A browser demo built on this lives in a separate repository, `wint-demo`, which vendors the built package.
 
+## Uncertainty (ensembles)
+
+`EnsembleSearch` runs the search on several forecast versions (models or ensemble members) and reports, per window, how many fit: "fits in 4 of 5 members", with what blocked the others and which members could not answer. See the [specification](SPEC.md#uncertainty-ensembles-and-agreement) for what the numbers mean. Agreement is **not** a probability.
+
+```rust
+use wint::{Ensemble, EnsembleSearch};
+let ensemble = Ensemble::new(members)?;                       // same time grid for every member
+let result = EnsembleSearch::new(&ensemble, &plan).min_agreement(0.8).run()?;
+let best = &result.windows[0];                                 // best first
+println!("fits in {} of {}", best.feasible, best.members_total);
+```
+
 ## Quick example
 
 ```rust

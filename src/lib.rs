@@ -2,6 +2,7 @@
 
 pub mod adapters;
 mod engine;
+mod ensemble;
 mod model;
 pub mod presets;
 mod schedule;
@@ -11,6 +12,10 @@ pub mod units;
 pub mod wasm;
 
 pub use engine::{Evidence, RejectedWindow, SearchResult, StageResult, WindowResult, WindowSearch};
+pub use ensemble::{
+    Blocker, Ensemble, EnsembleResult, EnsembleSearch, EnsembleWindow, Member, MemberOutcome,
+    MissingData, Verdict,
+};
 pub use model::{
     Comparison, Constraint, Metric, Observation, Plan, Preference, Series, Stage, ValidationError,
 };

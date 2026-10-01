@@ -455,6 +455,21 @@ pub enum ValidationError {
     InvalidUtcOffset {
         minutes: i32,
     },
+    /// An ensemble with no members.
+    EmptyEnsemble,
+    /// Two ensemble members share a name.
+    DuplicateMember {
+        name: String,
+    },
+    /// An ensemble member's series does not line up with the first member's.
+    EnsembleMismatch {
+        member: String,
+        reason: &'static str,
+    },
+    /// A search requirement (`min_agreement`, `min_coverage`) outside (0, 1].
+    InvalidRequirement {
+        name: &'static str,
+    },
 }
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -484,6 +499,14 @@ impl fmt::Display for ValidationError {
             ),
             Self::UnknownUnit { metric, symbol } => {
                 write!(f, "metric `{metric}`: unknown unit `{symbol}`")
+            }
+            Self::EmptyEnsemble => write!(f, "ensemble has no members"),
+            Self::DuplicateMember { name } => write!(f, "ensemble member `{name}` appears twice"),
+            Self::EnsembleMismatch { member, reason } => {
+                write!(f, "ensemble member `{member}` {reason}")
+            }
+            Self::InvalidRequirement { name } => {
+                write!(f, "{name} must be greater than 0 and at most 1")
             }
             Self::InvalidUtcOffset { minutes } => write!(
                 f,
