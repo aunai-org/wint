@@ -86,3 +86,62 @@ pub fn list_metrics() -> Result<String, JsError> {
         .collect();
     serde_json::to_string(&list).map_err(err)
 }
+
+/// The Open-Meteo multi-model forecast URL for a point. `models` is a comma-separated list such as
+/// `ecmwf_ifs025,gfs_seamless`; fetching it is up to the caller.
+#[wasm_bindgen(js_name = multiModelUrl)]
+pub fn multi_model_url(
+    latitude: f64,
+    longitude: f64,
+    forecast_days: u32,
+    models: &str,
+) -> Result<String, JsError> {
+    let names: Vec<&str> = models.split(',').map(str::trim).collect();
+    open_meteo::multi_model_url(latitude, longitude, forecast_days, &names)
+        .map_err(|e| err(format!("cannot build request: {e}")))
+}
+
+/// The Open-Meteo ensemble-API URL for a point. `models` is a comma-separated list such as
+/// `icon_seamless`; fetching it is up to the caller.
+#[wasm_bindgen(js_name = ensembleUrl)]
+pub fn ensemble_url(
+    latitude: f64,
+    longitude: f64,
+    forecast_days: u32,
+    models: &str,
+) -> Result<String, JsError> {
+    let names: Vec<&str> = models.split(',').map(str::trim).collect();
+    open_meteo::ensemble_url(latitude, longitude, forecast_days, &names)
+        .map_err(|e| err(format!("cannot build request: {e}")))
+}
+
+/// Parses an Open-Meteo multi-model or ensemble response into ensemble JSON
+/// (`{"members": [{"name", "series"}]}`).
+#[wasm_bindgen(js_name = parseOpenMeteoEnsemble)]
+pub fn parse_open_meteo_ensemble(response: &str) -> Result<String, JsError> {
+    let ensemble = open_meteo::parse_ensemble(response)
+        .map_err(|e| err(format!("cannot load forecast: {e}")))?;
+    serde_json::to_string(&ensemble).map_err(err)
+}
+
+/// Searches every member of an ensemble and returns per-window agreement as JSON. `min_agreement`
+/// and `min_coverage` are shares in (0, 1]; agreement is a count of forecast versions, not a
+/// probability.
+#[wasm_bindgen(js_name = searchEnsemble)]
+pub fn search_ensemble(
+    ensemble_json: &str,
+    plan_json: &str,
+    min_agreement: f64,
+    min_coverage: f64,
+) -> Result<String, JsError> {
+    let ensemble: crate::Ensemble =
+        serde_json::from_str(ensemble_json).map_err(|e| err(format!("invalid ensemble: {e}")))?;
+    let plan: Plan =
+        serde_json::from_str(plan_json).map_err(|e| err(format!("invalid plan: {e}")))?;
+    let result = crate::EnsembleSearch::new(&ensemble, &plan)
+        .min_agreement(min_agreement)
+        .min_coverage(min_coverage)
+        .run()
+        .map_err(|e| err(format!("invalid search: {e}")))?;
+    serde_json::to_string(&result).map_err(err)
+}

@@ -39,7 +39,7 @@ The engine compiles to WebAssembly (feature `wasm`), so it can run in a browser 
 ```sh
 rustup target add wasm32-unknown-unknown
 cargo install wasm-bindgen-cli --version 0.2.129 --locked   # must match the wasm-bindgen crate
-scripts/build-wasm.sh          # writes ./pkg (wint.js, wint_bg.wasm, wint.d.ts; about 280 KB)
+scripts/build-wasm.sh          # writes ./pkg, a ready-to-publish npm package (about 390 KB, 150 KB gzipped)
 node scripts/wasm-smoke.mjs    # checks the package against the same fixtures as the Rust tests
 ```
 
@@ -50,7 +50,7 @@ const series = parseOpenMeteo(await (await fetch(openMeteoUrl(52.52, 13.41, 3)))
 const result = JSON.parse(search(series, presetPlan('drone', 2)));
 ```
 
-Also exported: `parseCsv`, `listPresets`, `listMetrics`, `version`. Errors are thrown as readable messages. A browser demo built on this lives in a separate repository, `wint-demo`, which vendors the built package.
+Also exported: `parseCsv`, `listPresets`, `listMetrics`, `version`, and for several forecast versions `multiModelUrl`, `ensembleUrl`, `parseOpenMeteoEnsemble` and `searchEnsemble(ensembleJson, planJson, minAgreement, minCoverage)`. Errors are thrown as readable messages. The generated `pkg/package.json` is named `wint-wasm` by default (the name `wint` is taken on npm; set `WINT_NPM_NAME` to change it). It is not published. A browser demo built on this lives in a separate repository, `wint-demo`, which vendors the built package.
 
 ## Uncertainty (ensembles)
 
