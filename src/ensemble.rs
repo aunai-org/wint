@@ -17,8 +17,8 @@
 //! window still counts as "does not fit" even if a reading was also missing.
 
 use crate::engine::{Evidence, WindowSearch};
-use crate::{Plan, Series, ValidationError};
-use std::collections::BTreeMap;
+use crate::{Constraint, Plan, Series, ValidationError};
+use std::collections::{BTreeMap, BTreeSet};
 
 /// One forecast version: a model name or an ensemble member id, and its series.
 #[derive(Clone, Debug, PartialEq)]
@@ -133,7 +133,8 @@ pub struct Blocker {
     pub members: usize,
 }
 
-/// A metric some members could not provide, and how many.
+/// A metric some members lacked in a window, and how many. Every metric a member lacks is counted,
+/// not only the first one the search ran into.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize))]
 pub struct MissingData {
@@ -172,6 +173,9 @@ pub struct EnsembleResult {
     pub members: Vec<String>,
     pub min_agreement: f64,
     pub min_coverage: f64,
+    /// Metrics that the plan's hard constraints need and that no member provides in any hour, so
+    /// no window can be judged on them. Sorted by name.
+    pub unprovided: Vec<String>,
     /// Every candidate window, best first: those meeting the requirement, then by agreement,
     /// coverage and preference score, then earliest start.
     pub windows: Vec<EnsembleWindow>,
@@ -272,10 +276,33 @@ impl<'a> EnsembleSearch<'a> {
                 .then(cmp_desc_opt(a.suitability, b.suitability))
                 .then(a.start_ms.cmp(&b.start_ms))
         });
+        let needed: BTreeSet<&str> = self
+            .plan
+            .stages
+            .iter()
+            .flat_map(|s| &s.constraints)
+            .filter_map(|c| match c {
+                Constraint::Hard { metric, .. } => Some(metric.0.as_str()),
+                Constraint::Soft { .. } => None,
+            })
+            .collect();
+        let unprovided = needed
+            .into_iter()
+            .filter(|metric| {
+                !members.iter().any(|m| {
+                    m.series
+                        .observations
+                        .iter()
+                        .any(|o| o.values.contains_key(*metric))
+                })
+            })
+            .map(str::to_string)
+            .collect();
         Ok(EnsembleResult {
             members: members.iter().map(|m| m.name.clone()).collect(),
             min_agreement: self.min_agreement,
             min_coverage: self.min_coverage,
+            unprovided,
             windows,
         })
     }
@@ -308,7 +335,12 @@ impl<'a> EnsembleSearch<'a> {
                             .entry((f.stage.clone(), f.constraint.clone()))
                             .or_default() += 1
                     }
-                    Verdict::Unknown => *missing.entry(f.metric.clone()).or_default() += 1,
+                    Verdict::Unknown => {
+                        // Every hard-rule metric this member lacks in the window, not only the first.
+                        for metric in self.lacking(&o.member, start_ms) {
+                            *missing.entry(metric).or_default() += 1;
+                        }
+                    }
                     Verdict::Feasible => {}
                 }
             }
@@ -342,6 +374,37 @@ impl<'a> EnsembleSearch<'a> {
             missing,
             outcomes,
         }
+    }
+}
+
+impl EnsembleSearch<'_> {
+    /// Hard-constraint metrics that `member` has no reading for somewhere in the window that
+    /// starts at `start_ms` (each stage is checked over its own span).
+    fn lacking(&self, member: &str, start_ms: i64) -> BTreeSet<String> {
+        let mut lacking = BTreeSet::new();
+        let Some(m) = self.ensemble.members.iter().find(|m| m.name == member) else {
+            return lacking;
+        };
+        let series = &m.series;
+        let Some(first) = series.observations.first() else {
+            return lacking;
+        };
+        let start = ((start_ms - first.timestamp_ms) / series.cadence_ms) as usize;
+        let mut offset = 0;
+        for stage in &self.plan.stages {
+            let count = (stage.duration_ms / series.cadence_ms) as usize;
+            for observation in series.observations.iter().skip(start + offset).take(count) {
+                for constraint in &stage.constraints {
+                    if let Constraint::Hard { metric, .. } = constraint {
+                        if !observation.values.contains_key(&metric.0) {
+                            lacking.insert(metric.0.clone());
+                        }
+                    }
+                }
+            }
+            offset += count;
+        }
+        lacking
     }
 }
 

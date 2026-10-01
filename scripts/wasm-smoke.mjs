@@ -54,11 +54,15 @@ const w = rm.windows.find(x => x.unknown === 2 && x.feasible === 2);
 assert.ok(w, 'a window where two models fit and two cannot judge visibility');
 assert.deepEqual([w.agreement, w.coverage, w.meets_requirement, w.missing[0].metric, w.missing[0].members], [1, 0.5, true, 'visibility', 2]);
 assert.deepEqual(w.outcomes.map(o => o.verdict).sort(), ['feasible', 'feasible', 'unknown', 'unknown']);
+assert.deepEqual(rm.unprovided, []); // two of the four models do provide visibility
 const members6 = JSON.parse(wint.parseOpenMeteoEnsemble(ens));
 assert.equal(members6.members[0].name, 'control');
 assert.equal(members6.members.length, 6);
 const field = JSON.parse(wint.searchEnsemble(JSON.stringify(members6), wint.presetPlan('field-work', 2), 0.8, 0.5));
 assert.ok(field.windows.every(x => x.unknown === 0 && x.coverage === 1));
+// The ensemble service has no visibility at all, so a rule on it is reported as unprovided.
+const droneOnEnsemble = JSON.parse(wint.searchEnsemble(JSON.stringify(members6), wint.presetPlan('drone', 2), 1, 0.5));
+assert.deepEqual(droneOnEnsemble.unprovided, ['visibility']);
 // A plain single-model response is a one-member ensemble.
 assert.equal(JSON.parse(wint.parseOpenMeteoEnsemble(openMeteo)).members[0].name, 'default');
 // URLs and errors.

@@ -552,19 +552,10 @@ fn print_ensemble(plan: &Plan, ensemble: &Ensemble, result: &EnsembleResult, arg
         result.windows.len()
     );
     // Metrics that no member provides cannot be judged by any rule that uses them.
-    let mut absent: Vec<&str> = result
-        .windows
-        .iter()
-        .flat_map(|w| w.missing.iter())
-        .filter(|m| m.members == result.members.len())
-        .map(|m| m.metric.as_str())
-        .collect();
-    absent.sort_unstable();
-    absent.dedup();
-    if !absent.is_empty() {
+    if !result.unprovided.is_empty() {
         println!(
             "Note: no forecast version provides {}, so rules on it cannot be judged. Relax those rules or use data that includes them.",
-            absent.join(", ")
+            result.unprovided.join(", ")
         );
     }
     if meeting == 0 && !result.windows.is_empty() {

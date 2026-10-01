@@ -368,6 +368,138 @@ fn ensembles_and_requirements_are_validated() {
         .is_err());
 }
 
+/// A member with a wind and a temperature reading in one hour, either of which may be left out.
+fn two_metric_member(name: &str, wind: Option<f64>, temp: Option<f64>) -> Member {
+    let mut o = Observation::at(0);
+    if let Some(w) = wind {
+        o = o.with("wind_speed", w);
+    }
+    if let Some(t) = temp {
+        o = o.with("temperature", t);
+    }
+    Member {
+        name: name.into(),
+        series: Series::new(H, vec![o]).unwrap(),
+    }
+}
+fn wind_and_temperature_plan() -> Plan {
+    Plan::single_stage(
+        "p",
+        H,
+        vec![
+            Constraint::hard(
+                "wind limit",
+                Metric::new("wind_speed"),
+                Comparison::LessThan,
+                10.0,
+            ),
+            Constraint::hard(
+                "warm enough",
+                Metric::new("temperature"),
+                Comparison::GreaterThan,
+                0.0,
+            ),
+            Constraint::hard(
+                "radiation",
+                Metric::new("solar_radiation"),
+                Comparison::LessThan,
+                800.0,
+            ),
+        ],
+    )
+}
+
+#[test]
+fn every_metric_a_member_lacks_is_named_not_only_the_first() {
+    // a lacks wind and temperature, b lacks only temperature, c has both; nobody has solar_radiation.
+    let ens = Ensemble::new(vec![
+        two_metric_member("a", None, None),
+        two_metric_member("b", Some(3.0), None),
+        two_metric_member("c", Some(3.0), Some(15.0)),
+    ])
+    .unwrap();
+    let r = EnsembleSearch::new(&ens, &wind_and_temperature_plan())
+        .run()
+        .unwrap();
+    let w = &r.windows[0];
+    assert_eq!((w.feasible, w.infeasible, w.unknown), (0, 0, 3));
+    let count = |metric: &str| {
+        w.missing
+            .iter()
+            .find(|m| m.metric == metric)
+            .map(|m| m.members)
+    };
+    assert_eq!(count("solar_radiation"), Some(3));
+    assert_eq!(count("temperature"), Some(2)); // a and b
+    assert_eq!(count("wind_speed"), Some(1)); // only a
+                                              // The metric nobody provides in any hour is called out once, at the top level.
+    assert_eq!(r.unprovided, ["solar_radiation"]);
+}
+
+#[test]
+fn unprovided_ignores_soft_rules_and_metrics_some_member_has() {
+    let plan = Plan::single_stage(
+        "p",
+        H,
+        vec![
+            Constraint::hard(
+                "wind limit",
+                Metric::new("wind_speed"),
+                Comparison::LessThan,
+                10.0,
+            ),
+            Constraint::soft(
+                "mild",
+                Metric::new("temperature"),
+                Preference::Minimize {
+                    ideal: 20.0,
+                    scale: 10.0,
+                },
+                1.0,
+            ),
+        ],
+    );
+    // Wind comes from one member only, temperature (a soft rule) from none: neither is "unprovided".
+    let ens = Ensemble::new(vec![
+        two_metric_member("a", Some(3.0), None),
+        two_metric_member("b", None, None),
+    ])
+    .unwrap();
+    let r = EnsembleSearch::new(&ens, &plan).run().unwrap();
+    assert!(r.unprovided.is_empty());
+}
+
+#[test]
+fn a_member_with_a_definite_violation_is_not_reported_as_missing_data() {
+    // b lacks temperature but its wind is far over the limit: it does not fit, whatever the temperature.
+    let plan = Plan::single_stage(
+        "p",
+        H,
+        vec![
+            Constraint::hard(
+                "wind limit",
+                Metric::new("wind_speed"),
+                Comparison::LessThan,
+                10.0,
+            ),
+            Constraint::hard(
+                "warm enough",
+                Metric::new("temperature"),
+                Comparison::GreaterThan,
+                0.0,
+            ),
+        ],
+    );
+    let ens = Ensemble::new(vec![
+        two_metric_member("a", Some(3.0), Some(15.0)),
+        two_metric_member("b", Some(30.0), None),
+    ])
+    .unwrap();
+    let w = &EnsembleSearch::new(&ens, &plan).run().unwrap().windows[0];
+    assert_eq!((w.feasible, w.infeasible, w.unknown), (1, 1, 0));
+    assert!(w.missing.is_empty());
+}
+
 #[cfg(feature = "json")]
 mod json {
     use super::*;
@@ -418,5 +550,6 @@ mod json {
             .collect();
         assert_eq!(verdicts, ["feasible", "unknown", "infeasible"]);
         assert_eq!(w["missing"][0]["metric"], "wind_speed");
+        assert_eq!(value["unprovided"], serde_json::json!([]));
     }
 }
