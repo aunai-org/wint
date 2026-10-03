@@ -1,6 +1,6 @@
 use env_operability::{
-    format_offset, Comparison, Constraint, Metric, Observation, Plan, Schedule, Series, Stage,
-    ValidationError, WindowSearch,
+    present, ClockSpan, Comparison, Constraint, Expectation, Metric, Observation, Plan, Schedule,
+    Series, Stage, ValidationError, WindowSearch,
 };
 
 const H: i64 = 3_600_000;
@@ -94,10 +94,30 @@ fn schedule_failure_explains_itself_in_time_order() {
         .find(|r| r.start_ms.rem_euclid(DAY) == 0)
         .unwrap();
     assert_eq!(first.failure.constraint, "time of day");
-    assert_eq!(first.failure.expected, "within 09:00-12:00 local");
+    // The evidence is data: the window that was required and the local span that was examined.
     assert_eq!(
-        first.failure.note.as_deref(),
-        Some("02:00 to 03:00 local (UTC+02:00)")
+        first.failure.expectation,
+        Expectation::ClockWindow {
+            from_minute: 540,
+            to_minute: 720
+        }
+    );
+    assert_eq!(
+        first.failure.clock,
+        Some(ClockSpan {
+            start_minute: 120,
+            end_minute: 180,
+            utc_offset_minutes: 120
+        })
+    );
+    // Wording is the presenter's job; the optional default reads as before.
+    assert_eq!(
+        present::describe_expectation(&first.failure.expectation),
+        "within 09:00-12:00 local"
+    );
+    assert_eq!(
+        present::describe_reading(&first.failure),
+        "02:00 to 03:00 local (UTC+02:00)"
     );
     assert_eq!(first.failure.actual, None);
     // A passing window reports the local span it occupies.
@@ -113,8 +133,12 @@ fn schedule_failure_explains_itself_in_time_order() {
         .unwrap();
     assert!(row.passed);
     assert_eq!(
-        row.note.as_deref(),
-        Some("09:00 to 11:00 local (UTC+02:00)")
+        row.clock,
+        Some(ClockSpan {
+            start_minute: 540,
+            end_minute: 660,
+            utc_offset_minutes: 120
+        })
     );
 }
 
@@ -179,7 +203,7 @@ fn offsets_are_validated() {
     ));
     assert!(s.clone().with_utc_offset(-721).is_err());
     assert!(s.clone().with_utc_offset(840).is_ok() && s.with_utc_offset(-720).is_ok());
-    assert_eq!(format_offset(-720), "UTC-12:00");
+    assert_eq!(present::format_offset(-720), "UTC-12:00");
 }
 
 #[cfg(feature = "json")]

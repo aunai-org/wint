@@ -57,6 +57,7 @@ Uncertainty first, then the smaller items.
 - [ ] Verify the live multi-model and ensemble fetch from a real browser (mocked with real responses in tests; the sandbox cannot run a browser against the live API)
 
 **M4.4 Remaining**
+- [x] Layering: results are data. Evidence carries a structured `expectation` and `clock` span instead of pre-formatted text; wording and display helpers moved to the opt-in `present` module; tests enforce it (`tests/layering.rs`)
 - [ ] Temporal predicates and gaps between stages
 - [ ] Stable schemas and API (freeze JSON formats and the Rust/JS interfaces)
 - [ ] Weekday rules; daylight-saving-aware offsets

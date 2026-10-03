@@ -4,6 +4,7 @@ pub mod adapters;
 mod engine;
 mod ensemble;
 mod model;
+pub mod present;
 pub mod presets;
 mod schedule;
 pub mod time;
@@ -11,7 +12,10 @@ pub mod units;
 #[cfg(feature = "wasm")]
 pub mod wasm;
 
-pub use engine::{Evidence, RejectedWindow, SearchResult, StageResult, WindowResult, WindowSearch};
+pub use engine::{
+    ClockSpan, Evidence, Expectation, RejectedWindow, SearchResult, StageResult, WindowResult,
+    WindowSearch,
+};
 pub use ensemble::{
     Blocker, Ensemble, EnsembleResult, EnsembleSearch, EnsembleWindow, Member, MemberOutcome,
     MissingData, Verdict,
@@ -19,4 +23,4 @@ pub use ensemble::{
 pub use model::{
     Comparison, Constraint, Metric, Observation, Plan, Preference, Series, Stage, ValidationError,
 };
-pub use schedule::{format_clock, format_offset, Schedule, ScheduleError};
+pub use schedule::{Schedule, ScheduleError};

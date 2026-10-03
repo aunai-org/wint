@@ -1,5 +1,5 @@
-//! Minimal UTC date/time helpers (Unix milliseconds <-> ISO 8601), so the
-//! library needs no date-time dependency.
+//! Minimal UTC date/time *parsing* (ISO 8601 to Unix milliseconds), so the library needs no date-time
+//! dependency. Turning instants back into text is presentation: see [`crate::present`].
 
 /// Days since 1970-01-01 for a proleptic Gregorian civil date.
 fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
@@ -19,27 +19,6 @@ fn days_in_month(year: i64, month: i64) -> i64 {
         _ if (year % 4 == 0 && year % 100 != 0) || year % 400 == 0 => 29,
         _ => 28,
     }
-}
-
-/// Formats Unix milliseconds as `YYYY-MM-DDTHH:MMZ` (UTC).
-pub fn format_utc(ms: i64) -> String {
-    let minutes = ms.div_euclid(60_000);
-    let (days, minute_of_day) = (minutes.div_euclid(1440), minutes.rem_euclid(1440));
-    // Civil-from-days (Howard Hinnant's algorithm).
-    let z = days + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = z.rem_euclid(146_097);
-    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let day = doy - (153 * mp + 2) / 5 + 1;
-    let month = if mp < 10 { mp + 3 } else { mp - 9 };
-    let year = yoe + era * 400 + i64::from(month <= 2);
-    format!(
-        "{year:04}-{month:02}-{day:02}T{:02}:{:02}Z",
-        minute_of_day / 60,
-        minute_of_day % 60
-    )
 }
 
 /// Parses `YYYY-MM-DDTHH:MM[:SS[.fff]]` followed by `Z` or a `±HH:MM` offset
@@ -94,13 +73,6 @@ pub fn parse_utc(text: &str) -> Option<i64> {
 mod tests {
     use super::*;
     #[test]
-    fn formats_known_instants() {
-        assert_eq!(format_utc(0), "1970-01-01T00:00Z");
-        assert_eq!(format_utc(1_790_000_000_000), "2026-09-21T14:13Z");
-        assert_eq!(format_utc(-60_000), "1969-12-31T23:59Z");
-        assert_eq!(format_utc(951_782_400_000), "2000-02-29T00:00Z");
-    }
-    #[test]
     fn parses_zones_and_round_trips() {
         assert_eq!(parse_utc("1970-01-01T00:00Z"), Some(0));
         assert_eq!(parse_utc("2000-02-29T00:00:00Z"), Some(951_782_400_000));
@@ -113,7 +85,7 @@ mod tests {
             Some(parse_utc("2026-09-21T08:00Z").unwrap() + 30_500)
         );
         for ms in [0, 1_790_000_040_000, -86_400_000, 4_102_444_800_000] {
-            assert_eq!(parse_utc(&format_utc(ms)), Some(ms));
+            assert_eq!(parse_utc(&crate::present::format_utc(ms)), Some(ms));
         }
     }
     #[test]

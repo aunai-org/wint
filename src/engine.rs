@@ -1,11 +1,39 @@
-use crate::schedule::{format_clock, format_offset};
 use crate::{Comparison, Constraint, Plan, Preference, Schedule, Series, ValidationError};
+
+/// What a piece of evidence was checked against, as data. The engine never turns this into text:
+/// wording, rounding and units belong to whoever presents the result (see [`crate::present`] for an
+/// optional default).
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
+#[cfg_attr(feature = "json", serde(tag = "type", rename_all = "snake_case"))]
+pub enum Expectation {
+    /// A hard limit: the reading must satisfy `reading <comparison> threshold`.
+    Comparison {
+        comparison: Comparison,
+        threshold: f64,
+    },
+    /// A soft preference, scored rather than passed or failed.
+    Preference { preference: Preference },
+    /// A daily clock window (minutes after local midnight; `to_minute` may be 1440).
+    ClockWindow { from_minute: u16, to_minute: u16 },
+}
+
+/// The span of local clock time a time-of-day check examined, as numbers: minutes after local
+/// midnight (the end wraps at 24:00) and the local clock's offset from UTC.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
+pub struct ClockSpan {
+    pub start_minute: u16,
+    pub end_minute: u16,
+    pub utc_offset_minutes: i32,
+}
 
 /// One auditable observation behind a decision.
 ///
 /// For a passing hard constraint the evidence is the *binding* sample: the one
 /// closest to the limit. For a soft constraint it is the sample with the
 /// largest penalty. For a rejection it is the first sample that failed.
+/// Everything here is data or an identifier chosen by the plan's author; no field is display text.
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize))]
 pub struct Evidence {
@@ -14,14 +42,14 @@ pub struct Evidence {
     pub timestamp_ms: i64,
     pub metric: String,
     pub actual: Option<f64>,
-    pub expected: String,
+    /// What the reading was checked against.
+    pub expectation: Expectation,
     pub passed: bool,
     /// Soft constraints only: penalty in `[0, 1]` for this sample.
     pub penalty: Option<f64>,
-    /// Extra human-readable detail, used where a number does not say it (for
-    /// example the local clock span for a time-of-day check).
+    /// Time-of-day checks only: the local clock span that was examined.
     #[cfg_attr(feature = "json", serde(skip_serializing_if = "Option::is_none"))]
-    pub note: Option<String>,
+    pub clock: Option<ClockSpan>,
 }
 /// Per-stage outcome of a feasible window.
 #[derive(Clone, Debug, PartialEq)]
@@ -154,10 +182,13 @@ impl<'a> WindowSearch<'a> {
                                 timestamp_ms: observation.timestamp_ms,
                                 metric: metric.0.clone(),
                                 actual,
-                                expected: format_comparison(*comparison, *threshold),
+                                expectation: Expectation::Comparison {
+                                    comparison: *comparison,
+                                    threshold: *threshold,
+                                },
                                 passed,
                                 penalty: None,
-                                note: None,
+                                clock: None,
                             };
                             if !passed {
                                 if tolerate_missing && actual.is_none() {
@@ -186,10 +217,12 @@ impl<'a> WindowSearch<'a> {
                                     timestamp_ms: observation.timestamp_ms,
                                     metric: metric.0.clone(),
                                     actual: Some(actual),
-                                    expected: format_preference(preference),
+                                    expectation: Expectation::Preference {
+                                        preference: preference.clone(),
+                                    },
                                     passed: true,
                                     penalty: Some(penalty),
-                                    note: None,
+                                    clock: None,
                                 };
                                 keep_binding(&mut binding[index], -penalty, item);
                             }
@@ -233,8 +266,8 @@ impl<'a> WindowSearch<'a> {
         })
     }
 }
-/// Evidence for a time-of-day check. `local_ms` is the span start on the local
-/// clock and `len_ms` its length; `passed` picks the pass or fail wording.
+/// Evidence for a time-of-day check. `local_ms` is the span start on the local clock and `len_ms`
+/// its length.
 fn schedule_evidence(
     stage: &crate::Stage,
     schedule: &Schedule,
@@ -255,15 +288,17 @@ fn schedule_evidence(
         timestamp_ms,
         metric: "local_time".into(),
         actual: None,
-        expected: format!("within {schedule} local"),
+        expectation: Expectation::ClockWindow {
+            from_minute: schedule.from_minute(),
+            to_minute: schedule.to_minute(),
+        },
         passed,
         penalty: None,
-        note: Some(format!(
-            "{} to {} local ({})",
-            format_clock(start),
-            format_clock(end),
-            format_offset(utc_offset_minutes)
-        )),
+        clock: Some(ClockSpan {
+            start_minute: start,
+            end_minute: end,
+            utc_offset_minutes,
+        }),
     }
 }
 fn suitability(weighted_penalty: f64, total_weight: f64) -> f64 {
@@ -286,43 +321,6 @@ fn hard_margin(c: Comparison, actual: f64, threshold: f64) -> f64 {
         Comparison::GreaterThan | Comparison::GreaterThanOrEqual => actual - threshold,
         Comparison::Equal => 0.0,
     }
-}
-/// Human-readable number: at most 4 decimals, trailing zeros trimmed.
-pub(crate) fn fmt_num(value: f64) -> String {
-    let text = format!("{value:.4}");
-    text.trim_end_matches('0').trim_end_matches('.').to_string()
-}
-fn format_preference(p: &Preference) -> String {
-    match *p {
-        Preference::Minimize { ideal, scale } => format!(
-            "minimize: ideal {}, scale {}",
-            fmt_num(ideal),
-            fmt_num(scale)
-        ),
-        Preference::Maximize { ideal, scale } => format!(
-            "maximize: ideal {}, scale {}",
-            fmt_num(ideal),
-            fmt_num(scale)
-        ),
-        Preference::Range { min, max, scale } => {
-            format!(
-                "range: {}..={}, scale {}",
-                fmt_num(min),
-                fmt_num(max),
-                fmt_num(scale)
-            )
-        }
-    }
-}
-fn format_comparison(c: Comparison, t: f64) -> String {
-    let symbol = match c {
-        Comparison::LessThan => "<",
-        Comparison::LessThanOrEqual => "<=",
-        Comparison::GreaterThan => ">",
-        Comparison::GreaterThanOrEqual => ">=",
-        Comparison::Equal => "==",
-    };
-    format!("{symbol} {}", fmt_num(t))
 }
 fn preference_penalty(preference: &Preference, value: f64) -> f64 {
     let (deviation, scale) = match *preference {

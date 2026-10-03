@@ -1,11 +1,10 @@
 //! Command-line front end. Run with `--help` for usage.
 
 use env_operability::adapters::{csv, AdapterError};
-use env_operability::time::format_utc;
-use env_operability::units::canonical_unit;
+use env_operability::present::{describe_expectation, describe_reading, format_utc};
 use env_operability::{
-    presets, Ensemble, EnsembleResult, EnsembleSearch, Evidence, Plan, Schedule, SearchResult,
-    Series, WindowSearch,
+    presets, Ensemble, EnsembleResult, EnsembleSearch, Plan, Schedule, SearchResult, Series,
+    WindowSearch,
 };
 use std::process::ExitCode;
 
@@ -430,30 +429,6 @@ fn run(args: &Args) -> Result<(), String> {
     Ok(())
 }
 
-/// What to print as the reading: the note for checks that are not a number
-/// (time of day), otherwise the value with its unit.
-fn show_evidence(item: &Evidence) -> String {
-    match &item.note {
-        Some(note) => note.clone(),
-        None => show(&item.metric, item.actual),
-    }
-}
-
-/// A reading with its canonical unit, e.g. `10.29 m/s`.
-fn show(metric: &str, value: Option<f64>) -> String {
-    match value {
-        None => "missing".to_string(),
-        Some(v) => {
-            let number = format!("{v:.2}");
-            let number = number.trim_end_matches('0').trim_end_matches('.');
-            match canonical_unit(metric) {
-                Some(unit) => format!("{number} {unit}"),
-                None => number.to_string(),
-            }
-        }
-    }
-}
-
 fn print_text(plan: &Plan, series: &Series, result: &SearchResult, args: &Args) {
     let first = series.observations.first().map_or(0, |o| o.timestamp_ms);
     let last = series.observations.last().map_or(0, |o| o.timestamp_ms) + series.cadence_ms;
@@ -489,9 +464,9 @@ fn print_text(plan: &Plan, series: &Series, result: &SearchResult, args: &Args) 
                 "   - {}/{}: {} at {} (expected {})",
                 item.stage,
                 item.constraint,
-                show_evidence(item),
+                describe_reading(item),
                 format_utc(item.timestamp_ms),
-                item.expected
+                describe_expectation(&item.expectation)
             );
         }
     }
@@ -505,8 +480,8 @@ fn print_text(plan: &Plan, series: &Series, result: &SearchResult, args: &Args) 
                 f.stage,
                 f.constraint,
                 format_utc(f.timestamp_ms),
-                show_evidence(f),
-                f.expected
+                describe_reading(f),
+                describe_expectation(&f.expectation)
             );
         }
     }
@@ -798,12 +773,5 @@ mod tests {
         ])
         .is_ok());
         assert!(parse(&["--preset", "drone", "--series", "s", "--format", "nope"]).is_err());
-    }
-    #[test]
-    fn values_show_canonical_units() {
-        assert_eq!(show("wind_speed", Some(10.0)), "10 m/s");
-        assert_eq!(show("wind_speed", Some(10.2889)), "10.29 m/s");
-        assert_eq!(show("custom", Some(3.5)), "3.5");
-        assert_eq!(show("wind_speed", None), "missing");
     }
 }

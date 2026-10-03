@@ -37,7 +37,7 @@ Observations use a regular cadence. A stage duration must be a positive multiple
 
 Two separate mechanisms cover "daytime only", "until 8pm", "9am-12pm" and "overnight":
 
-- **Clock windows.** A stage may carry a `schedule` (`{"from": "09:00", "to": "12:00"}`). The whole stage must lie inside the window on the *local clock of the data*. `from` later than `to` wraps midnight (`20:00`-`06:00`); `00:00`-`20:00` means "until 8pm"; `to` may be `24:00`. Edges are half-open like every range in wint, so a 2-hour stage fits `09:00-12:00` when it starts at 09:00 or 10:00, never at 11:00. The check runs per sample interval, in time order with the other checks, so the first failure is reported with a readable note (`08:00 to 09:00 local (UTC+02:00)`). Schedules are per stage, so a survey stage can be daytime-only while recovery is unrestricted.
+- **Clock windows.** A stage may carry a `schedule` (`{"from": "09:00", "to": "12:00"}`). The whole stage must lie inside the window on the *local clock of the data*. `from` later than `to` wraps midnight (`20:00`-`06:00`); `00:00`-`20:00` means "until 8pm"; `to` may be `24:00`. Edges are half-open like every range in wint, so a 2-hour stage fits `09:00-12:00` when it starts at 09:00 or 10:00, never at 11:00. The check runs per sample interval, in time order with the other checks, so the first failure is reported with the examined local span as data (start and end minutes after local midnight, and the offset). Schedules are per stage, so a survey stage can be daytime-only while recovery is unrestricted.
 - **Sunrise/sunset.** Day and night depend on place and date, so they are data, not clock windows: use the `is_day` metric (1 in daylight, 0 at night; Open-Meteo supplies it) in an ordinary hard constraint (`is_day == 1` or `== 0`). A missing value rejects the window like any other metric.
 
 The local clock is a property of where the data is, so the **series** carries `utc_offset_minutes` (default 0, range -12:00 to +14:00) and the Open-Meteo adapter fills it from the API (`timezone=auto`). Only one fixed offset is modelled: a forecast that crosses a daylight-saving change shifts by an hour after it. Weekday rules ("weekends only") are not included yet.
@@ -91,17 +91,20 @@ Metrics are strings. The engine treats them as opaque and never sees units: it c
 
 ## Outputs, scoring, and explainability
 
-The result separates feasible windows from rejected candidates. Feasible windows are sorted by descending suitability then ascending start time. Evidence records the stage, constraint, sample timestamp, observed value, expected relation, pass/fail status and (for soft constraints) the penalty. To keep output bounded, a feasible window reports one *binding* sample per constraint: the sample closest to a hard limit, or with the largest soft penalty (earliest on ties). Each feasible window also carries a per-stage breakdown (time range and stage-local suitability). Rejections preserve the first decisive failure in time order. Score calculations are deterministic and use only supplied values; score is not a probability or safety certification.
+The result separates feasible windows from rejected candidates. Feasible windows are sorted by descending suitability then ascending start time. Evidence records the stage, constraint, sample timestamp, observed value, what it was checked against (the `expectation`: a comparison and threshold, a preference, or a clock window, all as data), pass/fail status, the penalty for soft constraints, and for time-of-day checks the examined clock span. No field of a result is display text: results hold numbers, enums and identifiers chosen by the plan's author. To keep output bounded, a feasible window reports one *binding* sample per constraint: the sample closest to a hard limit, or with the largest soft penalty (earliest on ties). Each feasible window also carries a per-stage breakdown (time range and stage-local suitability). Rejections preserve the first decisive failure in time order. Score calculations are deterministic and use only supplied values; score is not a probability or safety certification.
 
 ## Architecture
 
 The core has no dependencies and is pure/in-memory:
 
 ```text
-adapters (future) -> normalized Series -> search/evaluation -> WindowSearchResult
-                                  plans -> constraints/scoring --^
-CLI (example) --------------------------------------------------^
+adapters -> normalized Series/Ensemble -> search/evaluation -> results (facts and decisions)
+                          plans -> constraints/scoring --^            |
+                                                                      v
+                        presenters: CLI, web demo, your application (wording, rounding, units, colors)
 ```
+
+**Layering rule: the core returns facts and decisions; presenters decide how they look.** Results contain numbers, enums and identifiers chosen by the plan's author (rule, stage, metric and member names), plus decisions the caller asked for (such as `meets_requirement`, which follows the `min_agreement` and `min_coverage` it set). They contain no display text, rounding, colors or units wording, and the engine never calls the optional `present` module. Window ordering and the choice of one binding sample per constraint are documented ranking and summarizing policies that a caller can redo from the same data. `present` is a convenient default for Rust programs (the CLI uses it); the browser demo ignores it and formats the same data itself, which is the proof that nothing in the results depends on it. Two tests in `tests/layering.rs` enforce this: no text-formatting calls in the engine's search code, and every string in a serialized result must be an identifier or a data tag.
 
 Separating adapters protects the core from provider-specific units, interpolation, and forecast policy. The optional `wasm` feature (implies `json`) exposes the same operations to JavaScript via wasm-bindgen; it adds no logic of its own. The optional `json` feature adds serde (de)serialization of series, plans and results plus the CLI; JSON series deserialize through `Series::new`, so validation cannot be bypassed. Later crates may add CSV adapters and source-specific integrations.
 
@@ -113,7 +116,8 @@ src/
   model.rs        Series, observations, plans, constraint definitions
   engine.rs       candidate search, validation, evidence, ranking
   units.rs        metric vocabulary, unit conversion
-  time.rs         ISO 8601 <-> Unix ms helpers
+  time.rs         ISO 8601 parsing to Unix ms (input only)
+  present.rs      optional wording: numbers, units, clock and instant text, describing evidence (never called by the engine)
   adapters/       csv (no deps), open_meteo (json feature): series from external data
   presets.rs      illustrative starting-point plans
   wasm.rs         JavaScript bindings (`wasm` feature): JSON in, JSON out

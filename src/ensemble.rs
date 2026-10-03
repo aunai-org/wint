@@ -16,7 +16,7 @@
 //! counted as disagreement, and shows up in `coverage`. A definite violation elsewhere in the
 //! window still counts as "does not fit" even if a reading was also missing.
 
-use crate::engine::{Evidence, WindowSearch};
+use crate::engine::{Evidence, Expectation, WindowSearch};
 use crate::{Constraint, Plan, Series, ValidationError};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -239,7 +239,8 @@ impl<'a> EnsembleSearch<'a> {
             }
             for w in result.rejected {
                 // A reading-less failure that is not the clock check means "cannot say".
-                let missing = w.failure.actual.is_none() && w.failure.note.is_none();
+                let missing = w.failure.actual.is_none()
+                    && matches!(w.failure.expectation, Expectation::Comparison { .. });
                 by_start
                     .entry(w.start_ms)
                     .or_insert_with(|| (w.end_ms, Vec::new()))

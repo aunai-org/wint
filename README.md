@@ -52,6 +52,10 @@ const result = JSON.parse(search(series, presetPlan('drone', 2)));
 
 Also exported: `parseCsv`, `listPresets`, `listMetrics`, `version`, and for several forecast versions `multiModelUrl`, `ensembleUrl`, `parseOpenMeteoEnsemble` and `searchEnsemble(ensembleJson, planJson, minAgreement, minCoverage)`. Errors are thrown as readable messages. The generated `pkg/package.json` is named `wint-wasm` by default (the name `wint` is taken on npm; set `WINT_NPM_NAME` to change it). It is not published. A browser demo built on this lives in a separate repository, `wint-demo`, which vendors the built package.
 
+## Results are data
+
+The engine returns facts and decisions (numbers, enums, identifiers), never display text: a limit comes back as `{"type": "comparison", "comparison": "<=", "threshold": 10}`, a clock check as minutes and an offset. Wording, rounding, units and colors are for your application to choose; `wint::present` offers a ready-made default for Rust programs (`describe_expectation`, `describe_reading`, `format_value`, `format_utc`), and the CLI uses it. See the layering rule in the [specification](SPEC.md#architecture).
+
 ## Uncertainty (ensembles)
 
 `EnsembleSearch` runs the search on several forecast versions (models or ensemble members) and reports, per window, how many fit: "fits in 4 of 5 members", with what blocked the others and which members could not answer. See the [specification](SPEC.md#uncertainty-ensembles-and-agreement) for what the numbers mean. Agreement is **not** a probability.

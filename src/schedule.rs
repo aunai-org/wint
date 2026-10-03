@@ -145,16 +145,9 @@ pub(crate) fn parse_clock(text: &str) -> Option<u16> {
     (m < 60 && total <= DAY_MINUTES).then_some(total)
 }
 
-/// Formats minutes after midnight as `HH:MM` (1440 becomes `24:00`).
-pub fn format_clock(minutes: u16) -> String {
+/// `HH:MM` for minutes after midnight (1440 becomes `24:00`): the plan's JSON form and `Display`.
+pub(crate) fn format_clock(minutes: u16) -> String {
     format!("{:02}:{:02}", minutes / 60, minutes % 60)
-}
-
-/// Formats an offset in minutes as `UTC+02:00` / `UTC-05:30`.
-pub fn format_offset(minutes: i32) -> String {
-    let sign = if minutes < 0 { '-' } else { '+' };
-    let abs = minutes.unsigned_abs();
-    format!("UTC{sign}{:02}:{:02}", abs / 60, abs % 60)
 }
 
 #[cfg(test)]
@@ -223,10 +216,8 @@ mod tests {
         assert!(all.is_always() && all.contains_span(23 * H + H / 2, H));
     }
     #[test]
-    fn formats_clock_and_offset() {
+    fn clock_text_is_the_wire_form() {
         assert_eq!(format_clock(1440), "24:00");
-        assert_eq!(format_offset(120), "UTC+02:00");
-        assert_eq!(format_offset(-330), "UTC-05:30");
-        assert_eq!(format_offset(0), "UTC+00:00");
+        assert_eq!(format_clock(545), "09:05");
     }
 }
