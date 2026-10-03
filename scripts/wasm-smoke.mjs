@@ -29,8 +29,8 @@ assert.equal(ev.find((e) => e.expectation.type === 'preference').expectation.pre
 // A clock check reports its window and span as minutes.
 const clockResult = JSON.parse(wint.search(series, JSON.stringify({ ...JSON.parse(plan), stages: JSON.parse(plan).stages.map((s) => ({ ...s, schedule: { from: '09:00', to: '12:00' } })) })));
 const clockEv = clockResult.rejected[0].failure;
-assert.deepEqual(clockEv.expectation, { type: 'clock_window', from_minute: 540, to_minute: 720 });
-assert.deepEqual(Object.keys(clockEv.clock).sort(), ['end_minute', 'start_minute', 'utc_offset_minutes']);
+assert.deepEqual(clockEv.expectation, { type: 'clock_window', from_minute: 540, to_minute: 720, days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] });
+assert.deepEqual(Object.keys(clockEv.clock).sort(), ['end_minute', 'start_minute', 'utc_offset_minutes', 'weekday']);
 
 // CSV and JSON series give identical answers on the same data.
 const rc = JSON.parse(wint.search(wint.parseCsv(csv), plan));
