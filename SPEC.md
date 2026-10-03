@@ -58,6 +58,20 @@ Per window the result reports `fits`, `does not fit` and `cannot say` counts; **
 
 **What agreement is not.** It is not the probability that the operation will be possible. Ensemble members are not calibrated frequencies, different models share data and assumptions so they are not independent, and an ensemble can be too narrow. Always present it as "fits in `k` of `n`" and never as a percentage chance. All members are weighted equally.
 
+### Presenting results (guidance for applications)
+
+The engine returns facts; an application decides how to show them. These rules keep a display honest, and the [demo](https://github.com/aunai-org/wint-demo#how-to-read-the-display-the-rules) follows them (its README lists the exact colors):
+
+1. **Count, do not percent.** Say "fits in 3 of 4 forecast versions that can answer". Do not show agreement as a percentage chance or a confidence.
+2. **Keep abstentions separate.** "Cannot say" is not disagreement. Show how many versions could not answer and name every metric they lacked (`missing`), so a window that "fits in 2 of 2" with two silent versions is not read as "fits in 4 of 4".
+3. **Say what bar you used.** State the `min_agreement` and `min_coverage` in force next to the result, and keep windows that miss the bar visible, because "fits in 4 of 5" is information.
+4. **Color by agreement; mark the requirement separately.** Let color describe how much the versions agree (all, some, none, nobody could answer) and show "meets your requirement" as a second, independent mark. Then changing the bar never makes a split window look unanimous.
+5. **Name unprovided metrics first.** If `unprovided` is not empty, say so before listing windows: no window can be judged on those rules, and an empty result there is not good news.
+6. **Explain on demand.** Offer the `blockers` for each window and every version's verdict and reason (`outcomes`) one click away.
+7. **A missing reading in one series cannot be approved.** In a single series the engine never passes a window on missing data. Show it as "cannot be approved", neither safe nor unsafe.
+8. **Derive colors from the number the user reads.** If a score is shown with two decimals, apply any threshold to the rounded value, so a window labelled 0.80 is never colored "under 0.8".
+9. **Never present a score or an agreement as a safety certification.** Scores rank windows that already pass the hard limits; agreement counts forecast versions.
+
 Members must share cadence, timestamps and UTC offset exactly (`Ensemble::new` checks this), so that a window is the same span of time in every member.
 
 **Open-Meteo input.** `adapters::open_meteo::parse_ensemble` reads both services that return parallel versions. The *multi-model* forecast (`models=a,b,c`) names columns `<variable>_<model>`; the *ensemble* API names them `<variable>_member01` and so on, plus an unsuffixed control run. A variable with a single unsuffixed column (`is_day`) is shared by every member. A column that is entirely `null` carries no readings and is skipped (the ensemble API returns visibility and rain probability this way, with the unit `undefined`); a column with real values and an unrecognised unit is an error, never a guess. The consequence is visible and intended: rules that use a metric nobody provides cannot be judged, every window reports "cannot say", and the tools say so by name instead of silently passing or failing. Real examples seen at the time of writing: in a 4-model forecast ECMWF and Meteo-France provided no visibility; the ensemble API provided none for any member.
