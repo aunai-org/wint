@@ -20,6 +20,17 @@ const r = JSON.parse(wint.search(series, plan));
 assert.equal(r.feasible.length, 2);
 assert.equal(r.rejected.length, 2);
 assert.equal(r.feasible[0].stages[0].name, 'flight');
+// Results are data: evidence says what it was checked against as numbers and tags, with no display text.
+const ev = r.feasible[0].evidence;
+assert.ok(ev.every((e) => !('expected' in e) && !('note' in e)), 'results must not carry pre-formatted text');
+const hardEv = ev.find((e) => e.expectation.type === 'comparison');
+assert.deepEqual([hardEv.expectation.comparison, typeof hardEv.expectation.threshold], ['<=', 'number']);
+assert.equal(ev.find((e) => e.expectation.type === 'preference').expectation.preference.kind, 'minimize');
+// A clock check reports its window and span as minutes.
+const clockResult = JSON.parse(wint.search(series, JSON.stringify({ ...JSON.parse(plan), stages: JSON.parse(plan).stages.map((s) => ({ ...s, schedule: { from: '09:00', to: '12:00' } })) })));
+const clockEv = clockResult.rejected[0].failure;
+assert.deepEqual(clockEv.expectation, { type: 'clock_window', from_minute: 540, to_minute: 720 });
+assert.deepEqual(Object.keys(clockEv.clock).sort(), ['end_minute', 'start_minute', 'utc_offset_minutes']);
 
 // CSV and JSON series give identical answers on the same data.
 const rc = JSON.parse(wint.search(wint.parseCsv(csv), plan));
