@@ -1,4 +1,4 @@
-use crate::{Comparison, Constraint, Plan, Preference, Schedule, Series, ValidationError};
+use crate::{Comparison, Constraint, Plan, Preference, Schedule, Series, ValidationError, Weekday};
 
 /// What a piece of evidence was checked against, as data. The engine never turns this into text:
 /// wording, rounding and units belong to whoever presents the result (see [`crate::present`] for an
@@ -14,15 +14,21 @@ pub enum Expectation {
     },
     /// A soft preference, scored rather than passed or failed.
     Preference { preference: Preference },
-    /// A daily clock window (minutes after local midnight; `to_minute` may be 1440).
-    ClockWindow { from_minute: u16, to_minute: u16 },
+    /// A daily clock window (minutes after local midnight; `to_minute` may be 1440) on the listed
+    /// weekdays (the day the window starts on).
+    ClockWindow {
+        from_minute: u16,
+        to_minute: u16,
+        days: Vec<Weekday>,
+    },
 }
 
 /// The span of local clock time a time-of-day check examined, as numbers: minutes after local
-/// midnight (the end wraps at 24:00) and the local clock's offset from UTC.
+/// midnight (the end wraps at 24:00), the local weekday it starts on and the clock's offset from UTC.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize))]
 pub struct ClockSpan {
+    pub weekday: Weekday,
     pub start_minute: u16,
     pub end_minute: u16,
     pub utc_offset_minutes: i32,
@@ -291,10 +297,12 @@ fn schedule_evidence(
         expectation: Expectation::ClockWindow {
             from_minute: schedule.from_minute(),
             to_minute: schedule.to_minute(),
+            days: schedule.days(),
         },
         passed,
         penalty: None,
         clock: Some(ClockSpan {
+            weekday: Schedule::weekday_of(local_ms),
             start_minute: start,
             end_minute: end,
             utc_offset_minutes,

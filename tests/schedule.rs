@@ -1,6 +1,6 @@
 use env_operability::{
     present, ClockSpan, Comparison, Constraint, Expectation, Metric, Observation, Plan, Schedule,
-    Series, Stage, ValidationError, WindowSearch,
+    Series, Stage, ValidationError, Weekday, WindowSearch,
 };
 
 const H: i64 = 3_600_000;
@@ -99,12 +99,14 @@ fn schedule_failure_explains_itself_in_time_order() {
         first.failure.expectation,
         Expectation::ClockWindow {
             from_minute: 540,
-            to_minute: 720
+            to_minute: 720,
+            days: Weekday::ALL.to_vec()
         }
     );
     assert_eq!(
         first.failure.clock,
         Some(ClockSpan {
+            weekday: Weekday::Tue,
             start_minute: 120,
             end_minute: 180,
             utc_offset_minutes: 120
@@ -117,7 +119,7 @@ fn schedule_failure_explains_itself_in_time_order() {
     );
     assert_eq!(
         present::describe_reading(&first.failure),
-        "02:00 to 03:00 local (UTC+02:00)"
+        "tue 02:00 to 03:00 local (UTC+02:00)"
     );
     assert_eq!(first.failure.actual, None);
     // A passing window reports the local span it occupies.
@@ -135,6 +137,7 @@ fn schedule_failure_explains_itself_in_time_order() {
     assert_eq!(
         row.clock,
         Some(ClockSpan {
+            weekday: Weekday::Tue,
             start_minute: 540,
             end_minute: 660,
             utc_offset_minutes: 120
@@ -206,9 +209,57 @@ fn offsets_are_validated() {
     assert_eq!(present::format_offset(-720), "UTC-12:00");
 }
 
+#[test]
+fn weekday_rule_keeps_only_windows_on_the_chosen_day() {
+    let series = two_days(0);
+    let first_day = Schedule::weekday_of(series.observations[0].timestamp_ms);
+    let second_day = Schedule::weekday_of(series.observations[24].timestamp_ms);
+    assert_ne!(first_day, second_day);
+    let plan = Plan::single_stage("p", 3 * H, calm())
+        .with_schedule(Schedule::on_days([second_day]).unwrap());
+    let result = WindowSearch::new(&series, &plan).run().unwrap();
+    assert!(!result.feasible.is_empty());
+    assert!(result
+        .feasible
+        .iter()
+        .all(|w| Schedule::weekday_of(w.start_ms) == second_day));
+    // The rejection says which day it was and which days were wanted.
+    let rejected = result
+        .rejected
+        .iter()
+        .find(|r| Schedule::weekday_of(r.start_ms) == first_day)
+        .unwrap();
+    assert_eq!(rejected.failure.clock.unwrap().weekday, first_day);
+    assert!(matches!(
+        &rejected.failure.expectation,
+        Expectation::ClockWindow { days, .. } if days == &vec![second_day]
+    ));
+}
+
 #[cfg(feature = "json")]
 mod json {
     use super::*;
+
+    #[test]
+    fn weekdays_round_trip_through_json() {
+        let s: Schedule =
+            serde_json::from_str(r#"{"from":"09:00","to":"12:00","days":["sat","sun"]}"#).unwrap();
+        assert_eq!(s.days(), [Weekday::Sat, Weekday::Sun]);
+        assert_eq!(
+            serde_json::to_string(&s).unwrap(),
+            r#"{"from":"09:00","to":"12:00","days":["sat","sun"]}"#
+        );
+        // Days alone mean the whole day; omitted days mean every day and are not written back.
+        let only_days: Schedule = serde_json::from_str(r#"{"days":["mon"]}"#).unwrap();
+        assert_eq!((only_days.from_minute(), only_days.to_minute()), (0, 1440));
+        let plain: Schedule = serde_json::from_str(r#"{"from":"09:00","to":"12:00"}"#).unwrap();
+        assert_eq!(
+            serde_json::to_string(&plain).unwrap(),
+            r#"{"from":"09:00","to":"12:00"}"#
+        );
+        assert!(serde_json::from_str::<Schedule>(r#"{"days":[]}"#).is_err());
+        assert!(serde_json::from_str::<Schedule>(r#"{"days":["funday"]}"#).is_err());
+    }
 
     #[test]
     fn stage_schedule_and_series_offset_round_trip() {

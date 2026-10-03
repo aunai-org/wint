@@ -60,4 +60,5 @@ Uncertainty first, then the smaller items.
 - [x] Layering: results are data. Evidence carries a structured `expectation` and `clock` span instead of pre-formatted text; wording and display helpers moved to the opt-in `present` module; tests enforce it (`tests/layering.rs`)
 - [ ] Temporal predicates and gaps between stages
 - [ ] Stable schemas and API (freeze JSON formats and the Rust/JS interfaces)
-- [ ] Weekday rules; daylight-saving-aware offsets
+- [x] Weekday rules (`days` on a schedule, `--on`; the day a window starts on)
+- [ ] Daylight-saving-aware offsets

@@ -93,18 +93,28 @@ pub fn describe_expectation(expectation: &Expectation) -> String {
         Expectation::ClockWindow {
             from_minute,
             to_minute,
-        } => format!(
-            "within {}-{} local",
-            format_clock(*from_minute),
-            format_clock(*to_minute)
-        ),
+            days,
+        } => {
+            let text = format!(
+                "within {}-{} local",
+                format_clock(*from_minute),
+                format_clock(*to_minute)
+            );
+            if days.len() == 7 {
+                text
+            } else {
+                let names: Vec<_> = days.iter().map(|d| d.name()).collect();
+                format!("{text} on {}", names.join(","))
+            }
+        }
     }
 }
 
 /// A clock span, e.g. `09:00 to 11:00 local (UTC+02:00)`.
 pub fn describe_clock(span: &ClockSpan) -> String {
     format!(
-        "{} to {} local ({})",
+        "{} {} to {} local ({})",
+        span.weekday.name(),
         format_clock(span.start_minute),
         format_clock(span.end_minute),
         format_offset(span.utc_offset_minutes)
@@ -173,16 +183,29 @@ mod tests {
         assert_eq!(
             describe_expectation(&Expectation::ClockWindow {
                 from_minute: 540,
-                to_minute: 720
+                to_minute: 720,
+                days: crate::Weekday::ALL.to_vec()
             }),
             "within 09:00-12:00 local"
         );
+        assert_eq!(
+            describe_expectation(&Expectation::ClockWindow {
+                from_minute: 540,
+                to_minute: 720,
+                days: vec![crate::Weekday::Sat, crate::Weekday::Sun]
+            }),
+            "within 09:00-12:00 local on sat,sun"
+        );
         let span = ClockSpan {
+            weekday: crate::Weekday::Tue,
             start_minute: 540,
             end_minute: 660,
             utc_offset_minutes: 120,
         };
-        assert_eq!(describe_clock(&span), "09:00 to 11:00 local (UTC+02:00)");
+        assert_eq!(
+            describe_clock(&span),
+            "tue 09:00 to 11:00 local (UTC+02:00)"
+        );
     }
 
     #[test]

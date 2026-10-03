@@ -23,4 +23,4 @@ pub use ensemble::{
 pub use model::{
     Comparison, Constraint, Metric, Observation, Plan, Preference, Series, Stage, ValidationError,
 };
-pub use schedule::{Schedule, ScheduleError};
+pub use schedule::{parse_days, Schedule, ScheduleError, Weekday};

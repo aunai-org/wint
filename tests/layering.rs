@@ -234,6 +234,13 @@ mod results_are_data {
             "feasible",
             "infeasible",
             "unknown",
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun",
         ];
         let allowed: BTreeSet<&str> = identifiers.iter().chain(tags.iter()).copied().collect();
         let found = all_strings();

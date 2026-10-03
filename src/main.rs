@@ -29,6 +29,8 @@ Series (one of):
 Time of day (local time of the data):
   --between <HH:MM-HH:MM>   Only operate inside a daily window, e.g. 09:00-12:00,
                             00:00-20:00 (until 8pm) or 20:00-06:00 (overnight)
+  --on <days>               Only on some weekdays: mon-fri, sat,sun, weekend, fri-mon.
+                            With --between, the day is the one the window starts on.
   --utc-offset <+HH:MM>     Local clock offset from UTC (default: from the data, else +00:00)
 
 Several forecast versions (models or ensemble members) report 'fits in k of n':
@@ -108,7 +110,7 @@ enum Command {
 fn parse_args(raw: impl IntoIterator<Item = String>) -> Result<Command, String> {
     let (mut plan, mut preset, mut hours) = (None, None, 2.0);
     let (mut series, mut format, mut open_meteo, mut days) = (None, None, None, 3u32);
-    let (mut between, mut utc_offset) = (None, None);
+    let (mut between, mut on, mut utc_offset) = (None, None, None);
     let (mut models, mut ensemble) = (None, None);
     let (mut min_agreement, mut min_coverage) = (None, None);
     let (mut top, mut rejected, mut json) = (5, false, false);
@@ -159,6 +161,11 @@ fn parse_args(raw: impl IntoIterator<Item = String>) -> Result<Command, String> 
                 min_coverage = Some(parse_fraction("--min-coverage", &value("--min-coverage")?)?)
             }
             "--between" => between = Some(parse_between(&value("--between")?)?),
+            "--on" => {
+                on = Some(
+                    wint_days(&value("--on")?).map_err(|e| format!("--on: {e}"))?,
+                )
+            }
             "--utc-offset" => utc_offset = Some(parse_offset(&value("--utc-offset")?)?),
             "--top" => {
                 top = value("--top")?
@@ -198,6 +205,16 @@ fn parse_args(raw: impl IntoIterator<Item = String>) -> Result<Command, String> 
         },
         (None, None) => return Err("--series or --open-meteo is required".into()),
     };
+    let between = match (between, on) {
+        (None, None) => None,
+        (Some(window), None) => Some(window),
+        (window, Some(days)) => Some(
+            window
+                .unwrap_or(Schedule::new(0, 1440).expect("whole day is valid"))
+                .with_days(days)
+                .map_err(|e| format!("--on: {e}"))?,
+        ),
+    };
     Ok(Command::Run(Args {
         plan,
         series,
@@ -226,6 +243,10 @@ fn parse_fraction(flag: &str, text: &str) -> Result<f64, String> {
         .ok()
         .filter(|v: &f64| *v > 0.0 && *v <= 1.0)
         .ok_or_else(|| format!("{flag} must be greater than 0 and at most 1"))
+}
+
+fn wint_days(text: &str) -> Result<Vec<env_operability::Weekday>, env_operability::ScheduleError> {
+    env_operability::parse_days(text)
 }
 
 /// Parses `HH:MM-HH:MM` into a daily window.
@@ -672,6 +693,29 @@ mod tests {
                 "{flag:?}"
             );
         }
+    }
+    #[test]
+    fn on_limits_the_schedule_to_weekdays() {
+        let schedule = |extra: &[&str]| {
+            let mut args = vec!["--preset", "drone", "--series", "s"];
+            args.extend_from_slice(extra);
+            match parse(&args).unwrap() {
+                Command::Run(a) => a.between,
+                _ => panic!("expected a run"),
+            }
+        };
+        assert_eq!(schedule(&[]), None);
+        assert_eq!(
+            schedule(&["--on", "weekend"]).unwrap().to_string(),
+            "00:00-24:00 sat,sun"
+        );
+        assert_eq!(
+            schedule(&["--between", "09:00-12:00", "--on", "mon-fri"])
+                .unwrap()
+                .to_string(),
+            "09:00-12:00 mon,tue,wed,thu,fri"
+        );
+        assert!(parse(&["--preset", "drone", "--series", "s", "--on", "funday"]).is_err());
     }
     #[test]
     fn between_and_offset_are_parsed_and_validated() {
