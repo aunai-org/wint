@@ -254,7 +254,6 @@ impl<'a> WindowSearch<'a> {
         // First missing reading seen while tolerating them (see `run_tolerant`).
         let mut deferred_missing: Option<Evidence> = None;
         let mut evidence = Vec::new();
-        let offset_ms = i64::from(self.series.utc_offset_minutes) * 60_000;
         let count = (stage.duration_ms / self.series.cadence_ms) as usize;
         let samples = &self.series.observations[start..start + count];
         // Binding evidence per constraint: (rank, evidence); lower rank binds harder.
@@ -262,7 +261,8 @@ impl<'a> WindowSearch<'a> {
         let (mut stage_penalty, mut stage_weight) = (0.0, 0.0);
         for observation in samples {
             if let Some(schedule) = &stage.schedule {
-                let local = observation.timestamp_ms + offset_ms;
+                let offset_minutes = self.series.offset_at(observation);
+                let local = observation.timestamp_ms + i64::from(offset_minutes) * 60_000;
                 if !schedule.contains_span(local, self.series.cadence_ms) {
                     return Err(Box::new(schedule_evidence(
                         stage,
@@ -270,7 +270,7 @@ impl<'a> WindowSearch<'a> {
                         observation.timestamp_ms,
                         local,
                         self.series.cadence_ms,
-                        self.series.utc_offset_minutes,
+                        offset_minutes,
                         false,
                     )));
                 }
@@ -340,13 +340,14 @@ impl<'a> WindowSearch<'a> {
             }
         }
         if let Some(schedule) = &stage.schedule {
+            let first_offset = self.series.offset_at(&samples[0]);
             evidence.push(schedule_evidence(
                 stage,
                 schedule,
                 samples[0].timestamp_ms,
-                samples[0].timestamp_ms + offset_ms,
+                samples[0].timestamp_ms + i64::from(first_offset) * 60_000,
                 stage.duration_ms,
-                self.series.utc_offset_minutes,
+                first_offset,
                 true,
             ));
         }

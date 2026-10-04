@@ -236,9 +236,119 @@ fn weekday_rule_keeps_only_windows_on_the_chosen_day() {
     ));
 }
 
+/// Berlin, 2026-03-28 20:00 UTC onwards, hourly. Clocks go forward at 01:00 UTC on the 29th
+/// (02:00 CET becomes 03:00 CEST), so the offset is +60 before and +120 from then on.
+const BERLIN_START: i64 = 1_774_728_000_000;
+fn berlin_dst(per_sample: bool) -> Series {
+    let obs = (0..14)
+        .map(|i| {
+            let o = Observation::at(BERLIN_START + i * H).with("wind_speed", 2.0);
+            if per_sample {
+                o.with_utc_offset(if i < 5 { 60 } else { 120 })
+            } else {
+                o
+            }
+        })
+        .collect();
+    Series::new(H, obs).unwrap().with_utc_offset(60).unwrap()
+}
+
+#[test]
+fn per_sample_offsets_follow_a_daylight_saving_change() {
+    let plan = Plan::single_stage("p", H, calm())
+        .with_schedule(Schedule::parse("06:00", "09:00").unwrap());
+    let hour_of_day_utc = |series: &Series| {
+        let mut v: Vec<i64> = WindowSearch::new(series, &plan)
+            .run()
+            .unwrap()
+            .feasible
+            .iter()
+            .map(|w| (w.start_ms - BERLIN_START) / H + 20)
+            .map(|h| h % 24)
+            .collect();
+        v.sort();
+        v
+    };
+    // After the change 06:00-09:00 local is 04:00-07:00 UTC.
+    assert_eq!(hour_of_day_utc(&berlin_dst(true)), [4, 5, 6]);
+    // A single +01:00 offset is wrong once the clocks have moved: it finds 05:00-08:00 UTC.
+    assert_eq!(hour_of_day_utc(&berlin_dst(false)), [5, 6, 7]);
+}
+
+#[test]
+fn evidence_reports_the_offset_in_force_at_that_sample() {
+    let plan = Plan::single_stage("p", H, calm())
+        .with_schedule(Schedule::parse("06:00", "09:00").unwrap());
+    let result = WindowSearch::new(&berlin_dst(true), &plan).run().unwrap();
+    let window = result
+        .feasible
+        .iter()
+        .find(|w| w.start_ms == BERLIN_START + 8 * H)
+        .unwrap();
+    // 04:00 UTC on the 29th is 06:00 local at +02:00.
+    let clock = window.evidence.iter().find_map(|e| e.clock).unwrap();
+    assert_eq!((clock.start_minute, clock.utc_offset_minutes), (360, 120));
+    // Before the change the same local hour is at +01:00.
+    let early = result
+        .rejected
+        .iter()
+        .find(|r| r.start_ms == BERLIN_START)
+        .unwrap();
+    assert_eq!(early.failure.clock.unwrap().utc_offset_minutes, 60);
+}
+
+#[test]
+fn sample_offsets_are_range_checked_and_must_agree_across_an_ensemble() {
+    let bad = Series::new(
+        H,
+        vec![Observation::at(0).with_utc_offset(900), Observation::at(H)],
+    );
+    assert!(matches!(
+        bad,
+        Err(ValidationError::InvalidUtcOffset { minutes: 900 })
+    ));
+    let member = |name: &str, series: Series| env_operability::Member {
+        name: name.into(),
+        series,
+    };
+    let same = env_operability::Ensemble::new(vec![
+        member("a", berlin_dst(true)),
+        member("b", berlin_dst(true)),
+    ]);
+    assert!(same.is_ok());
+    let differ = env_operability::Ensemble::new(vec![
+        member("a", berlin_dst(true)),
+        member("b", berlin_dst(false)),
+    ]);
+    assert!(matches!(
+        differ,
+        Err(ValidationError::EnsembleMismatch { .. })
+    ));
+}
+
 #[cfg(feature = "json")]
 mod json {
     use super::*;
+
+    #[test]
+    fn observation_offsets_round_trip_through_json() {
+        let series: Series = serde_json::from_str(
+            r#"{"cadence_ms":3600000,"observations":[
+                {"timestamp_ms":0,"values":{"wind_speed":1},"utc_offset_minutes":60},
+                {"timestamp_ms":3600000,"values":{"wind_speed":1}}]}"#,
+        )
+        .unwrap();
+        assert_eq!(series.observations[0].utc_offset_minutes, Some(60));
+        assert_eq!(series.observations[1].utc_offset_minutes, None);
+        assert_eq!(series.offset_at(&series.observations[1]), 0);
+        let text = serde_json::to_string(&series.observations[1]).unwrap();
+        assert!(!text.contains("utc_offset"));
+        assert!(serde_json::from_str::<Series>(
+            r#"{"cadence_ms":3600000,"observations":[
+                {"timestamp_ms":0,"values":{},"utc_offset_minutes":9999}]}"#
+        )
+        .is_err());
+    }
 
     #[test]
     fn weekdays_round_trip_through_json() {

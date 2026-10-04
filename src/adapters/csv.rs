@@ -11,6 +11,9 @@
 //!   otherwise Unix seconds).
 //! * Every other header is `metric` or `metric (unit)` / `metric[unit]`. A
 //!   unit converts that column to the metric's canonical unit.
+//! * A column named `utc_offset_minutes` is not a metric: it gives the local clock offset from UTC
+//!   at each row (for example `60`, then `120` after a daylight-saving change), which time-of-day
+//!   schedules use instead of one fixed offset. An empty cell uses the series' offset.
 //! * An empty cell is a missing reading. Fields are split on commas and
 //!   trimmed; quoted fields are not supported.
 //! * The cadence is the gap between the first two rows; the series must then
@@ -20,6 +23,8 @@ use super::AdapterError;
 use crate::units::Unit;
 use crate::{Observation, Series};
 use std::collections::BTreeMap;
+
+const OFFSET_COLUMN: &str = "utc_offset_minutes";
 
 /// Splits `name (unit)` / `name[unit]` into its parts.
 fn split_header(header: &str) -> Option<(&str, Option<&str>)> {
@@ -60,6 +65,7 @@ pub fn parse(text: &str) -> Result<Series, AdapterError> {
         .next()
         .ok_or_else(|| AdapterError::format("line 1", "empty input"))?;
     let mut columns = Vec::new();
+    let mut offset_column = None;
     let mut units = BTreeMap::new();
     for (index, cell) in header.split(',').enumerate().skip(1) {
         let location = format!("line {header_line}, column {}", index + 1);
@@ -79,6 +85,15 @@ pub fn parse(text: &str) -> Result<Series, AdapterError> {
                 AdapterError::format(&location, format!("unknown unit `{symbol}`"))
             })?;
             units.insert(name.to_string(), unit);
+        }
+        if name == OFFSET_COLUMN {
+            if unit.is_some() {
+                return Err(AdapterError::format(
+                    location,
+                    format!("`{OFFSET_COLUMN}` takes no unit"),
+                ));
+            }
+            offset_column = Some(columns.len());
         }
         columns.push(name);
     }
@@ -108,8 +123,18 @@ pub fn parse(text: &str) -> Result<Series, AdapterError> {
             )
         })?;
         let mut observation = Observation::at(timestamp);
-        for (column, cell) in columns.iter().zip(&cells[1..]) {
+        for (index, (column, cell)) in columns.iter().zip(&cells[1..]).enumerate() {
             if cell.is_empty() {
+                continue;
+            }
+            if offset_column == Some(index) {
+                let minutes: i32 = cell.parse().map_err(|_| {
+                    AdapterError::format(
+                        format!("line {line}"),
+                        format!("bad offset `{cell}` for `{OFFSET_COLUMN}` (whole minutes)"),
+                    )
+                })?;
+                observation = observation.with_utc_offset(minutes);
                 continue;
             }
             let value: f64 = cell.parse().map_err(|_| {
@@ -153,6 +178,24 @@ mod tests {
         assert_eq!(first["custom"], 1.0);
         assert!(!series.observations[1].values.contains_key("temperature"));
         assert!(!series.observations[2].values.contains_key("custom"));
+    }
+    #[test]
+    fn offset_column_is_per_row_not_a_metric() {
+        let text = "timestamp,wind_speed,utc_offset_minutes\n\
+                    2026-03-29T00:00Z,1,60\n2026-03-29T01:00Z,2,120\n2026-03-29T02:00Z,3,\n";
+        let series = parse(text).unwrap();
+        let offsets: Vec<Option<i32>> = series
+            .observations
+            .iter()
+            .map(|o| o.utc_offset_minutes)
+            .collect();
+        assert_eq!(offsets, [Some(60), Some(120), None]);
+        assert!(!series.observations[0]
+            .values
+            .contains_key("utc_offset_minutes"));
+        assert!(parse("t,wind_speed,utc_offset_minutes (min)\n0,1,60\n3600,2,60\n").is_err());
+        assert!(parse("t,wind_speed,utc_offset_minutes\n0,1,abc\n3600,2,60\n").is_err());
+        assert!(parse("t,wind_speed,utc_offset_minutes\n0,1,999\n3600,2,60\n").is_err());
     }
     #[test]
     fn accepts_epoch_seconds_and_millis_and_crlf() {

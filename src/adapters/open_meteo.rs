@@ -11,7 +11,8 @@
 //!
 //! The requests use `timezone=auto`; timestamps stay absolute (Unix seconds) and the response's
 //! `utc_offset_seconds` becomes the local-clock offset, so time-of-day schedules refer to the
-//! place's own time. A single offset is used for the whole forecast (see [`crate::Schedule`]).
+//! place's own time. The response carries only one offset, so it is used for the whole forecast: across a
+//! daylight-saving change the local clock is an hour off afterwards (see [`crate::Schedule`]).
 //!
 //! # Several forecast versions
 //!

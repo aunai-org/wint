@@ -11,9 +11,9 @@
 //! The weekday is the local day the window *starts* on, so a Friday `20:00-06:00` night runs into
 //! Saturday morning and still counts as Friday's.
 //!
-//! Only a fixed offset is modelled, so a forecast that crosses a daylight-saving
-//! change shifts by an hour after it. Sunrise/sunset windows are not clock
-//! windows: use the `is_day` metric from the data for those.
+//! The clock offset is the series' default; a sample may carry its own offset, which is how data
+//! that crosses a daylight-saving change stays correct (the library has no timezone database).
+//! Sunrise/sunset windows are not clock windows: use the `is_day` metric from the data for those.
 
 use std::fmt;
 

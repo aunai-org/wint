@@ -8,13 +8,27 @@ use std::fmt;
 pub struct Observation {
     pub timestamp_ms: i64,
     pub values: BTreeMap<String, f64>,
+    /// Local clock offset from UTC at this sample, in minutes. Overrides the series' offset for
+    /// this sample, so a forecast that crosses a daylight-saving change can say so. Absent means
+    /// the series' `utc_offset_minutes`.
+    #[cfg_attr(
+        feature = "json",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub utc_offset_minutes: Option<i32>,
 }
 impl Observation {
     pub fn at(timestamp_ms: i64) -> Self {
         Self {
             timestamp_ms,
             values: BTreeMap::new(),
+            utc_offset_minutes: None,
         }
+    }
+    /// Sets this sample's local clock offset from UTC (checked when the series is built).
+    pub fn with_utc_offset(mut self, minutes: i32) -> Self {
+        self.utc_offset_minutes = Some(minutes);
+        self
     }
     pub fn with(mut self, metric: impl Into<String>, value: f64) -> Self {
         self.values.insert(metric.into(), value);
@@ -371,6 +385,14 @@ impl Stage {
     }
 }
 
+fn check_offset(minutes: i32) -> Result<(), ValidationError> {
+    if (-720..=840).contains(&minutes) {
+        Ok(())
+    } else {
+        Err(ValidationError::InvalidUtcOffset { minutes })
+    }
+}
+
 /// Upper bound on the ways the gap ranges of one plan can lay out a window (their product).
 pub const MAX_ARRANGEMENTS: u64 = 10_000;
 
@@ -467,7 +489,8 @@ pub struct Series {
     pub cadence_ms: i64,
     pub observations: Vec<Observation>,
     /// Offset of the data's local clock from UTC, in minutes (for example
-    /// `120` for UTC+02:00). Used only by stage [`Schedule`]s; defaults to 0.
+    /// `120` for UTC+02:00). Used only by stage [`Schedule`]s; defaults to 0. A sample's own
+    /// `utc_offset_minutes` takes precedence (see [`Series::offset_at`]).
     pub utc_offset_minutes: i32,
 }
 /// Unvalidated wire form of [`Series`]; deserializing goes through
@@ -665,6 +688,9 @@ impl Series {
                     });
                 }
             }
+            if let Some(minutes) = observation.utc_offset_minutes {
+                check_offset(minutes)?;
+            }
             for (metric, value) in &observation.values {
                 if !value.is_finite() {
                     return Err(ValidationError::NonFiniteValue {
@@ -682,10 +708,14 @@ impl Series {
     }
     /// Sets the local clock's offset from UTC in minutes (-12:00 to +14:00).
     pub fn with_utc_offset(mut self, minutes: i32) -> Result<Self, ValidationError> {
-        if !(-720..=840).contains(&minutes) {
-            return Err(ValidationError::InvalidUtcOffset { minutes });
-        }
+        check_offset(minutes)?;
         self.utc_offset_minutes = minutes;
         Ok(self)
+    }
+    /// The local clock offset in force at `observation`: its own, else the series' default.
+    pub fn offset_at(&self, observation: &Observation) -> i32 {
+        observation
+            .utc_offset_minutes
+            .unwrap_or(self.utc_offset_minutes)
     }
 }

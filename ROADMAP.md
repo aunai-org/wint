@@ -62,4 +62,4 @@ Uncertainty first, then the smaller items.
 - [ ] Temporal predicates beyond gaps (rules that apply during a gap, "same day" and similar), only if a real use case asks
 - [x] Stable schemas: `schema_version` on results, `#[non_exhaustive]` public enums, golden-file tests, SPEC "Stability" rules (a 1.0 freeze of the Rust builder API remains for later)
 - [x] Weekday rules (`days` on a schedule, `--on`; the day a window starts on)
-- [ ] Daylight-saving-aware offsets
+- [x] Daylight-saving-aware offsets: optional per-sample `utc_offset_minutes` (JSON, CSV column); the core has no timezone database. Open-Meteo gives one offset per response, so a DST-crossing forecast still needs the offsets from elsewhere (e.g. pairing a local-time request) - open

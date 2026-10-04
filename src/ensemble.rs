@@ -82,6 +82,13 @@ impl Ensemble {
             {
                 return Err(mismatch("has different timestamps"));
             }
+            if a.observations
+                .iter()
+                .zip(&b.observations)
+                .any(|(x, y)| a.offset_at(x) != b.offset_at(y))
+            {
+                return Err(mismatch("has different UTC offsets at some samples"));
+            }
         }
         Ok(Self { members })
     }
