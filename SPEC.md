@@ -174,7 +174,7 @@ Threshold semantics, sampling boundaries, units, and missing data can create fal
 
 ## License and repository conventions
 
-Use dual `Apache-2.0 OR MIT` licensing, a Rust 2021 library-first crate, `rustfmt` formatting, `clippy -D warnings` in CI, conventional commits, and a changelog. Public behavior changes require tests and specification updates. Keep core modules dependency-free; optional integrations belong in feature-gated or separate crates. Include `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, and `SECURITY.md` before public release.
+Use `MIT` licensing (see `LICENSE`), a Rust 2021 library-first crate, `rustfmt` formatting, `clippy -D warnings` in CI, conventional commits, and a changelog. Public behavior changes require tests and specification updates. Keep core modules dependency-free; optional integrations belong in feature-gated or separate crates. Include `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, and `SECURITY.md` before public release.
 
 ## Immediate implementation tasks
 

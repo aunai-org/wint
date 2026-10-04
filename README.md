@@ -50,7 +50,7 @@ const series = parseOpenMeteo(await (await fetch(openMeteoUrl(52.52, 13.41, 3)))
 const result = JSON.parse(search(series, presetPlan('drone', 2)));
 ```
 
-Also exported: `parseCsv`, `listPresets`, `listMetrics`, `version`, and for several forecast versions `multiModelUrl`, `ensembleUrl`, `parseOpenMeteoEnsemble` and `searchEnsemble(ensembleJson, planJson, minAgreement, minCoverage)`. Errors are thrown as readable messages. The generated `pkg/package.json` is named `wint-wasm` by default (the name `wint` is taken on npm; set `WINT_NPM_NAME` to change it). It is not published. A browser demo built on this lives in a separate repository, `wint-demo`, which vendors the built package.
+Also exported: `parseCsv`, `listPresets`, `listMetrics`, `version`, and for several forecast versions `multiModelUrl`, `ensembleUrl`, `parseOpenMeteoEnsemble` and `searchEnsemble(ensembleJson, planJson, minAgreement, minCoverage)`. Errors are thrown as readable messages. The generated `pkg/package.json` is named `wint-engine` by default (the name `wint` is taken on npm; set `WINT_NPM_NAME` to change it). It is not published yet. A browser demo built on this lives in a separate repository, `wint-demo`, which vendors the built package.
 
 ## Results are data
 
