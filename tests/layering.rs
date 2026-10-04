@@ -1,8 +1,6 @@
 //! Guards the layering rule: the engine returns facts and decisions; wording, rounding, units and
 //! colors belong to presenters (see `present` for an optional default).
 
-use std::collections::BTreeSet;
-
 /// The source of a module up to its test section, without comment lines.
 fn production_code(path: &str) -> String {
     let source = std::fs::read_to_string(path).unwrap();
@@ -48,6 +46,7 @@ mod results_are_data {
         Preference, Schedule, Series, Stage, WindowSearch,
     };
     use serde_json::Value;
+    use std::collections::BTreeSet;
 
     const H: i64 = 3_600_000;
 
