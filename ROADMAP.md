@@ -58,7 +58,8 @@ Uncertainty first, then the smaller items.
 
 **M4.4 Remaining**
 - [x] Layering: results are data. Evidence carries a structured `expectation` and `clock` span instead of pre-formatted text; wording and display helpers moved to the opt-in `present` module; tests enforce it (`tests/layering.rs`)
-- [ ] Temporal predicates and gaps between stages
+- [x] Gaps between stages (`gap` min/max on a stage; nothing checked during the gap)
+- [ ] Temporal predicates beyond gaps (rules that apply during a gap, "same day" and similar), only if a real use case asks
 - [x] Stable schemas: `schema_version` on results, `#[non_exhaustive]` public enums, golden-file tests, SPEC "Stability" rules (a 1.0 freeze of the Rust builder API remains for later)
 - [x] Weekday rules (`days` on a schedule, `--on`; the day a window starts on)
 - [ ] Daylight-saving-aware offsets

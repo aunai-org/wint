@@ -43,6 +43,16 @@ Two separate mechanisms cover "daytime only", "until 8pm", "9am-12pm" and "overn
 The local clock is a property of where the data is, so the **series** carries `utc_offset_minutes` (default 0, range -12:00 to +14:00) and the Open-Meteo adapter fills it from the API (`timezone=auto`). Only one fixed offset is modelled: a forecast that crosses a daylight-saving change shifts by an hour after it. 
 - **Weekdays.** A schedule may also carry `days` (`{"from": "09:00", "to": "12:00", "days": ["sat", "sun"]}`; names `mon`...`sun`, omitted means every day, `from`/`to` default to the whole day, so `{"days": ["sat", "sun"]}` is "weekends"). The weekday is the *local day the window starts on*: a Friday `20:00-06:00` night includes Saturday 02:00, and Friday 02:00 belongs to Thursday's night. A whole-day schedule on chosen days requires both ends of each sample span to fall on allowed days. Evidence carries the wanted `days` and the examined span's `weekday` as data. The CLI form is `--on mon-fri` / `sat,sun` / `weekend` / `fri-mon`.
 
+## Gaps between stages
+
+By default stages run back to back. A stage after the first may instead declare a **gap**, the wait after the previous stage ends: `"gap": {"min_ms": 14400000, "max_ms": 43200000}` ("4 to 12 hours after"). `max_ms` defaults to `min_ms` (an exact delay) and `min_ms` to 0. Gaps are whole numbers of samples and are not allowed on the first stage.
+
+- **Nothing is checked during the gap.** Only the stages are tested against the data, so "wait for the coating to cure" does not need good weather in between. (Rules that apply while waiting are not modelled yet.)
+- **A window is still identified by the start of its first stage.** For each start the engine tries every allowed gap for every later stage and keeps the best complete layout: first one that needs no missing reading, then the highest suitability, then the smallest gaps. The chosen layout is visible in the result: each stage reports its `start_ms`, `end_ms` and `gap_ms`, and the window's `end_ms` is the end of the last stage.
+- **A rejected window** reports the failure of the layout that got furthest (the deepest stage, then the smallest gaps), and its `end_ms` assumes the minimum gaps. A window is only considered when the minimum layout fits inside the series; layouts that would run past its end are skipped.
+- **Ensembles:** each member chooses its own layout, so members may use different gaps for the same window. The window's `end_ms` is the earliest any layout can end, and `missing` names a metric a member lacks anywhere a stage could be placed.
+- **Size limit:** the product of the gap ranges (in samples) may not exceed 10 000 layouts per window; a larger plan is rejected with `TooManyGapOptions`.
+
 ## Uncertainty: ensembles and agreement
 
 A forecast is an estimate, so "the window fits" depends on which forecast you believe. An **ensemble** is several parallel versions of one forecast on a shared time grid: different weather models, or the members of one model's ensemble. `EnsembleSearch` runs the ordinary window search on every member and reports, per window, how many members it fits.

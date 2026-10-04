@@ -65,6 +65,9 @@ pub struct StageResult {
     pub name: String,
     pub start_ms: i64,
     pub end_ms: i64,
+    /// How long after the previous stage ended this one started (0 for the first stage and for
+    /// stages without a gap).
+    pub gap_ms: i64,
     /// Soft-preference suitability within this stage alone (1.0 if none apply).
     pub suitability: f64,
 }
@@ -127,25 +130,41 @@ impl<'a> WindowSearch<'a> {
     }
     fn run_with(&self, tolerate_missing: bool) -> Result<SearchResult, ValidationError> {
         self.plan.validate(self.series.cadence_ms)?;
-        let samples = (self.plan.duration_ms() / self.series.cadence_ms) as usize;
+        let cadence = self.series.cadence_ms;
+        let samples = (self.plan.min_span_ms() / cadence) as usize;
         let mut result = SearchResult::default();
         if samples > self.series.observations.len() {
             return Ok(result);
         }
         for start_index in 0..=self.series.observations.len() - samples {
             let start_ms = self.series.observations[start_index].timestamp_ms;
-            let end_ms = start_ms + self.plan.duration_ms();
-            match self.evaluate(start_index, tolerate_missing) {
-                Ok(window) => result.feasible.push(WindowResult {
+            match self.arrange(0, start_index, tolerate_missing) {
+                Ok(best) => {
+                    let end_ms = best.stages.last().map_or(start_ms, |s| s.end_ms);
+                    let mut deferred = best.deferred;
+                    if let Some(item) = deferred.take() {
+                        result.rejected.push(RejectedWindow {
+                            start_ms,
+                            end_ms,
+                            failure: item,
+                        });
+                    } else {
+                        result.feasible.push(WindowResult {
+                            start_ms,
+                            end_ms,
+                            suitability: suitability(best.penalty, best.weight),
+                            stages: best.stages,
+                            evidence: best.evidence,
+                        });
+                    }
+                }
+                Err(Some((_, failure))) => result.rejected.push(RejectedWindow {
                     start_ms,
-                    end_ms,
-                    ..window
-                }),
-                Err(failure) => result.rejected.push(RejectedWindow {
-                    start_ms,
-                    end_ms,
+                    end_ms: start_ms + self.plan.min_span_ms(),
                     failure: *failure,
                 }),
+                // Unreachable: the minimum layout always fits, so some layout was tried.
+                Err(None) => {}
             }
         }
         result.feasible.sort_by(|a, b| {
@@ -155,138 +174,231 @@ impl<'a> WindowSearch<'a> {
         });
         Ok(result)
     }
-    fn evaluate(
+
+    /// Lays out stages `k..` with stage `k` starting `gap` samples after `at` (the sample where the
+    /// previous stage ended; the window start for stage 0). Tries every allowed gap and returns the
+    /// best complete layout: one with no missing readings first, then the highest suitability, then
+    /// the earliest. If none is feasible it returns the failure of the layout that got furthest
+    /// (deepest stage, then earliest). `Err(None)` means no layout fits inside the series.
+    fn arrange(&self, k: usize, at: usize, tolerate_missing: bool) -> Result<Layout, Failure> {
+        let cadence = self.series.cadence_ms;
+        let stage = &self.plan.stages[k];
+        let count = (stage.duration_ms / cadence) as usize;
+        let (min_gap, max_gap) = match stage.gap {
+            Some(gap) if k > 0 => (
+                (gap.min_ms / cadence) as usize,
+                (gap.max_ms / cadence) as usize,
+            ),
+            _ => (0, 0),
+        };
+        let last = self.plan.stages.len() - 1;
+        let mut best: Option<Layout> = None;
+        let mut failure: Failure = None;
+        for gap in min_gap..=max_gap {
+            let start = at + gap;
+            if start + count > self.series.observations.len() {
+                break;
+            }
+            let part = match self.evaluate_stage(stage, start, tolerate_missing) {
+                Ok(part) => part,
+                Err(item) => {
+                    keep_deeper(&mut failure, k, item);
+                    continue;
+                }
+            };
+            let first_ms = self.series.observations[start].timestamp_ms;
+            let stage_result = StageResult {
+                name: stage.name.clone(),
+                start_ms: first_ms,
+                end_ms: first_ms + stage.duration_ms,
+                gap_ms: gap as i64 * cadence,
+                suitability: suitability(part.penalty, part.weight),
+            };
+            let rest = if k == last {
+                Ok(Layout::default())
+            } else {
+                self.arrange(k + 1, start + count, tolerate_missing)
+            };
+            match rest {
+                Ok(rest) => {
+                    let mut layout = Layout {
+                        stages: vec![stage_result],
+                        evidence: part.evidence,
+                        penalty: part.penalty + rest.penalty,
+                        weight: part.weight + rest.weight,
+                        deferred: part.deferred.or(rest.deferred),
+                    };
+                    layout.stages.extend(rest.stages);
+                    layout.evidence.extend(rest.evidence);
+                    if layout.better_than(best.as_ref()) {
+                        best = Some(layout);
+                    }
+                }
+                Err(Some((depth, item))) => keep_deeper(&mut failure, depth, item),
+                Err(None) => {}
+            }
+        }
+        match best {
+            Some(layout) => Ok(layout),
+            None => Err(failure),
+        }
+    }
+
+    /// Checks one stage over the samples starting at `start`.
+    fn evaluate_stage(
         &self,
+        stage: &crate::Stage,
         start: usize,
         tolerate_missing: bool,
-    ) -> Result<WindowResult, Box<Evidence>> {
+    ) -> Result<StagePart, Box<Evidence>> {
         // First missing reading seen while tolerating them (see `run_tolerant`).
         let mut deferred_missing: Option<Evidence> = None;
         let mut evidence = Vec::new();
-        let mut stages = Vec::new();
-        let mut weighted_penalty = 0.0;
-        let mut total_weight = 0.0;
-        let mut offset = 0;
         let offset_ms = i64::from(self.series.utc_offset_minutes) * 60_000;
-        for stage in &self.plan.stages {
-            let count = (stage.duration_ms / self.series.cadence_ms) as usize;
-            let samples = &self.series.observations[start + offset..start + offset + count];
-            // Binding evidence per constraint: (rank, evidence); lower rank binds harder.
-            let mut binding: Vec<Option<(f64, Evidence)>> = vec![None; stage.constraints.len()];
-            let (mut stage_penalty, mut stage_weight) = (0.0, 0.0);
-            for observation in samples {
-                if let Some(schedule) = &stage.schedule {
-                    let local = observation.timestamp_ms + offset_ms;
-                    if !schedule.contains_span(local, self.series.cadence_ms) {
-                        return Err(Box::new(schedule_evidence(
-                            stage,
-                            schedule,
-                            observation.timestamp_ms,
-                            local,
-                            self.series.cadence_ms,
-                            self.series.utc_offset_minutes,
-                            false,
-                        )));
-                    }
+        let count = (stage.duration_ms / self.series.cadence_ms) as usize;
+        let samples = &self.series.observations[start..start + count];
+        // Binding evidence per constraint: (rank, evidence); lower rank binds harder.
+        let mut binding: Vec<Option<(f64, Evidence)>> = vec![None; stage.constraints.len()];
+        let (mut stage_penalty, mut stage_weight) = (0.0, 0.0);
+        for observation in samples {
+            if let Some(schedule) = &stage.schedule {
+                let local = observation.timestamp_ms + offset_ms;
+                if !schedule.contains_span(local, self.series.cadence_ms) {
+                    return Err(Box::new(schedule_evidence(
+                        stage,
+                        schedule,
+                        observation.timestamp_ms,
+                        local,
+                        self.series.cadence_ms,
+                        self.series.utc_offset_minutes,
+                        false,
+                    )));
                 }
-                for (index, constraint) in stage.constraints.iter().enumerate() {
-                    match constraint {
-                        Constraint::Hard {
-                            name,
-                            metric,
-                            comparison,
-                            threshold,
-                        } => {
-                            let actual = observation.values.get(&metric.0).copied();
-                            let passed = actual.is_some_and(|v| comparison.matches(v, *threshold));
+            }
+            for (index, constraint) in stage.constraints.iter().enumerate() {
+                match constraint {
+                    Constraint::Hard {
+                        name,
+                        metric,
+                        comparison,
+                        threshold,
+                    } => {
+                        let actual = observation.values.get(&metric.0).copied();
+                        let passed = actual.is_some_and(|v| comparison.matches(v, *threshold));
+                        let item = Evidence {
+                            stage: stage.name.clone(),
+                            constraint: name.clone(),
+                            timestamp_ms: observation.timestamp_ms,
+                            metric: metric.0.clone(),
+                            actual,
+                            expectation: Expectation::Comparison {
+                                comparison: *comparison,
+                                threshold: *threshold,
+                            },
+                            passed,
+                            penalty: None,
+                            clock: None,
+                        };
+                        if !passed {
+                            if tolerate_missing && actual.is_none() {
+                                deferred_missing.get_or_insert(item);
+                                continue;
+                            }
+                            return Err(Box::new(item));
+                        }
+                        let margin = hard_margin(*comparison, actual.unwrap_or(0.0), *threshold);
+                        keep_binding(&mut binding[index], margin, item);
+                    }
+                    Constraint::Soft {
+                        name,
+                        metric,
+                        preference,
+                        weight,
+                    } if *weight > 0.0 => {
+                        if let Some(actual) = observation.values.get(&metric.0).copied() {
+                            let penalty = preference_penalty(preference, actual);
+                            stage_penalty += penalty * weight;
+                            stage_weight += weight;
                             let item = Evidence {
                                 stage: stage.name.clone(),
                                 constraint: name.clone(),
                                 timestamp_ms: observation.timestamp_ms,
                                 metric: metric.0.clone(),
-                                actual,
-                                expectation: Expectation::Comparison {
-                                    comparison: *comparison,
-                                    threshold: *threshold,
+                                actual: Some(actual),
+                                expectation: Expectation::Preference {
+                                    preference: preference.clone(),
                                 },
-                                passed,
-                                penalty: None,
+                                passed: true,
+                                penalty: Some(penalty),
                                 clock: None,
                             };
-                            if !passed {
-                                if tolerate_missing && actual.is_none() {
-                                    deferred_missing.get_or_insert(item);
-                                    continue;
-                                }
-                                return Err(Box::new(item));
-                            }
-                            let margin =
-                                hard_margin(*comparison, actual.unwrap_or(0.0), *threshold);
-                            keep_binding(&mut binding[index], margin, item);
+                            keep_binding(&mut binding[index], -penalty, item);
                         }
-                        Constraint::Soft {
-                            name,
-                            metric,
-                            preference,
-                            weight,
-                        } if *weight > 0.0 => {
-                            if let Some(actual) = observation.values.get(&metric.0).copied() {
-                                let penalty = preference_penalty(preference, actual);
-                                stage_penalty += penalty * weight;
-                                stage_weight += weight;
-                                let item = Evidence {
-                                    stage: stage.name.clone(),
-                                    constraint: name.clone(),
-                                    timestamp_ms: observation.timestamp_ms,
-                                    metric: metric.0.clone(),
-                                    actual: Some(actual),
-                                    expectation: Expectation::Preference {
-                                        preference: preference.clone(),
-                                    },
-                                    passed: true,
-                                    penalty: Some(penalty),
-                                    clock: None,
-                                };
-                                keep_binding(&mut binding[index], -penalty, item);
-                            }
-                        }
-                        Constraint::Soft { .. } => {}
                     }
+                    Constraint::Soft { .. } => {}
                 }
             }
-            if let Some(schedule) = &stage.schedule {
-                evidence.push(schedule_evidence(
-                    stage,
-                    schedule,
-                    samples[0].timestamp_ms,
-                    samples[0].timestamp_ms + offset_ms,
-                    stage.duration_ms,
-                    self.series.utc_offset_minutes,
-                    true,
-                ));
-            }
-            evidence.extend(binding.into_iter().flatten().map(|(_, item)| item));
-            weighted_penalty += stage_penalty;
-            total_weight += stage_weight;
-            let stage_start = samples[0].timestamp_ms;
-            stages.push(StageResult {
-                name: stage.name.clone(),
-                start_ms: stage_start,
-                end_ms: stage_start + stage.duration_ms,
-                suitability: suitability(stage_penalty, stage_weight),
-            });
-            offset += count;
         }
-        if let Some(item) = deferred_missing {
-            return Err(Box::new(item));
+        if let Some(schedule) = &stage.schedule {
+            evidence.push(schedule_evidence(
+                stage,
+                schedule,
+                samples[0].timestamp_ms,
+                samples[0].timestamp_ms + offset_ms,
+                stage.duration_ms,
+                self.series.utc_offset_minutes,
+                true,
+            ));
         }
-        Ok(WindowResult {
-            start_ms: 0,
-            end_ms: 0,
-            suitability: suitability(weighted_penalty, total_weight),
-            stages,
+        evidence.extend(binding.into_iter().flatten().map(|(_, item)| item));
+        Ok(StagePart {
             evidence,
+            penalty: stage_penalty,
+            weight: stage_weight,
+            deferred: deferred_missing,
         })
+    }
+}
+
+/// What checking one stage produced.
+struct StagePart {
+    evidence: Vec<Evidence>,
+    penalty: f64,
+    weight: f64,
+    deferred: Option<Evidence>,
+}
+/// One complete way of placing the stages of a window.
+#[derive(Default)]
+struct Layout {
+    stages: Vec<StageResult>,
+    evidence: Vec<Evidence>,
+    penalty: f64,
+    weight: f64,
+    /// A missing reading that was tolerated (ensembles only): the layout is not feasible, but
+    /// nothing definite ruled it out either.
+    deferred: Option<Evidence>,
+}
+impl Layout {
+    /// Whether this layout should replace `current`: layouts with no missing reading beat those
+    /// with one, then higher suitability wins; ties keep the earlier (smaller gaps) layout.
+    fn better_than(&self, current: Option<&Layout>) -> bool {
+        let Some(current) = current else { return true };
+        match (self.deferred.is_some(), current.deferred.is_some()) {
+            (false, true) => true,
+            (true, false) => false,
+            _ => {
+                suitability(self.penalty, self.weight)
+                    > suitability(current.penalty, current.weight)
+            }
+        }
+    }
+}
+/// `Some((depth, evidence))` is the failure of the layout that got to stage `depth`; `None`
+/// means no layout fit inside the series.
+type Failure = Option<(usize, Box<Evidence>)>;
+fn keep_deeper(current: &mut Failure, depth: usize, item: Box<Evidence>) {
+    if current.as_ref().is_none_or(|(d, _)| depth > *d) {
+        *current = Some((depth, item));
     }
 }
 /// Evidence for a time-of-day check. `local_ms` is the span start on the local clock and `len_ms`

@@ -291,12 +291,56 @@ impl Constraint {
     }
 }
 
+/// How long after the previous stage ends a stage may start: any whole number of samples from
+/// `min_ms` to `max_ms` inclusive. Nothing is checked during the gap.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(try_from = "GapWire"))]
+pub struct Gap {
+    pub min_ms: i64,
+    pub max_ms: i64,
+}
+/// Wire form: `{"min_ms": 14400000, "max_ms": 43200000}`; `max_ms` defaults to `min_ms` (an exact
+/// delay) and `min_ms` to 0.
+#[cfg(feature = "json")]
+#[derive(serde::Deserialize)]
+struct GapWire {
+    #[serde(default)]
+    min_ms: i64,
+    max_ms: Option<i64>,
+}
+#[cfg(feature = "json")]
+impl TryFrom<GapWire> for Gap {
+    type Error = String;
+    fn try_from(wire: GapWire) -> Result<Self, String> {
+        let max_ms = wire.max_ms.unwrap_or(wire.min_ms);
+        Gap::new(wire.min_ms, max_ms).ok_or_else(|| "gap needs 0 <= min_ms <= max_ms".to_string())
+    }
+}
+impl Gap {
+    /// `None` unless `0 <= min_ms <= max_ms`.
+    pub fn new(min_ms: i64, max_ms: i64) -> Option<Self> {
+        (0 <= min_ms && min_ms <= max_ms).then_some(Self { min_ms, max_ms })
+    }
+    /// Exactly `ms` after the previous stage.
+    pub fn exactly(ms: i64) -> Option<Self> {
+        Self::new(ms, ms)
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 pub struct Stage {
     pub name: String,
     pub duration_ms: i64,
     pub constraints: Vec<Constraint>,
+    /// Delay after the previous stage (not allowed on the first stage). Absent means the stage
+    /// starts right when the previous one ends.
+    #[cfg_attr(
+        feature = "json",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub gap: Option<Gap>,
     /// Optional local time-of-day window the whole stage must fit inside.
     #[cfg_attr(
         feature = "json",
@@ -310,8 +354,15 @@ impl Stage {
             name: name.into(),
             duration_ms,
             constraints,
+            gap: None,
             schedule: None,
         }
+    }
+    /// Lets the stage start between `min_ms` and `max_ms` after the previous one ends.
+    /// Panics unless `0 <= min_ms <= max_ms`; build a [`Gap`] yourself to handle that.
+    pub fn with_gap(mut self, min_ms: i64, max_ms: i64) -> Self {
+        self.gap = Some(Gap::new(min_ms, max_ms).expect("gap needs 0 <= min_ms <= max_ms"));
+        self
     }
     /// Restricts the stage to a local time-of-day window.
     pub fn with_schedule(mut self, schedule: Schedule) -> Self {
@@ -319,6 +370,9 @@ impl Stage {
         self
     }
 }
+
+/// Upper bound on the ways the gap ranges of one plan can lay out a window (their product).
+pub const MAX_ARRANGEMENTS: u64 = 10_000;
 
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
@@ -343,8 +397,19 @@ impl Plan {
             vec![Stage::new("operation", duration_ms, constraints)],
         )
     }
+    /// Total time the stages take, gaps not counted.
     pub fn duration_ms(&self) -> i64 {
         self.stages.iter().map(|s| s.duration_ms).sum()
+    }
+    /// The shortest span a window can cover: the stages plus every gap at its minimum.
+    pub fn min_span_ms(&self) -> i64 {
+        self.duration_ms()
+            + self
+                .stages
+                .iter()
+                .filter_map(|s| s.gap)
+                .map(|g| g.min_ms)
+                .sum::<i64>()
     }
     /// Restricts every stage to the same local time-of-day window.
     pub fn with_schedule(mut self, schedule: Schedule) -> Self {
@@ -361,7 +426,24 @@ impl Plan {
             return Err(ValidationError::EmptyPlan);
         }
         let mut total: i64 = 0;
-        for stage in &self.stages {
+        let mut arrangements: u64 = 1;
+        for (index, stage) in self.stages.iter().enumerate() {
+            if let Some(gap) = stage.gap {
+                let aligned = gap.min_ms % cadence_ms == 0 && gap.max_ms % cadence_ms == 0;
+                if index == 0 || !aligned {
+                    return Err(ValidationError::InvalidGap {
+                        stage: stage.name.clone(),
+                    });
+                }
+                total = total
+                    .checked_add(gap.max_ms)
+                    .ok_or(ValidationError::PlanTooLong)?;
+                arrangements = arrangements
+                    .saturating_mul(((gap.max_ms - gap.min_ms) / cadence_ms) as u64 + 1);
+                if arrangements > MAX_ARRANGEMENTS {
+                    return Err(ValidationError::TooManyGapOptions);
+                }
+            }
             if stage.duration_ms <= 0 || stage.duration_ms % cadence_ms != 0 {
                 return Err(ValidationError::InvalidStageDuration {
                     stage: stage.name.clone(),
@@ -436,6 +518,12 @@ pub enum ValidationError {
         stage: String,
     },
     PlanTooLong,
+    /// A stage's gap is on the first stage, or not a whole number of samples.
+    InvalidGap {
+        stage: String,
+    },
+    /// The gap ranges allow more than [`MAX_ARRANGEMENTS`] ways to lay out one window.
+    TooManyGapOptions,
     InvalidConstraint {
         constraint: String,
         reason: &'static str,
@@ -493,6 +581,14 @@ impl fmt::Display for ValidationError {
                 "stage `{stage}` duration must be a positive multiple of the cadence"
             ),
             Self::PlanTooLong => write!(f, "total plan duration overflows"),
+            Self::InvalidGap { stage } => write!(
+                f,
+                "stage `{stage}`: a gap needs a previous stage and must be a whole number of samples"
+            ),
+            Self::TooManyGapOptions => write!(
+                f,
+                "the gap ranges allow more than {MAX_ARRANGEMENTS} ways to place the stages"
+            ),
             Self::InvalidConstraint { constraint, reason } => {
                 write!(f, "constraint `{constraint}`: {reason}")
             }

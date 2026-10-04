@@ -147,6 +147,8 @@ pub struct MissingData {
 #[cfg_attr(feature = "json", derive(serde::Serialize))]
 pub struct EnsembleWindow {
     pub start_ms: i64,
+    /// The earliest the window can end (stages plus minimum gaps); a member may finish later when
+    /// the plan has gaps.
     pub end_ms: i64,
     pub members_total: usize,
     pub feasible: usize,
@@ -267,8 +269,11 @@ impl<'a> EnsembleSearch<'a> {
             .collect();
         let mut windows: Vec<EnsembleWindow> = by_start
             .into_iter()
-            .map(|(start_ms, (end_ms, mut outcomes))| {
+            .map(|(start_ms, (_, mut outcomes))| {
                 outcomes.sort_by_key(|o| order[o.member.as_str()]);
+                // Members may lay a plan with gaps out differently, so the window ends at the
+                // earliest time any layout can end.
+                let end_ms = start_ms + self.plan.min_span_ms();
                 self.combine(start_ms, end_ms, outcomes)
             })
             .collect();
@@ -384,7 +389,8 @@ impl<'a> EnsembleSearch<'a> {
 
 impl EnsembleSearch<'_> {
     /// Hard-constraint metrics that `member` has no reading for somewhere in the window that
-    /// starts at `start_ms` (each stage is checked over its own span).
+    /// starts at `start_ms` (each stage is checked over its own span, or over every span it could
+    /// occupy when it has a gap).
     fn lacking(&self, member: &str, start_ms: i64) -> BTreeSet<String> {
         let mut lacking = BTreeSet::new();
         let Some(m) = self.ensemble.members.iter().find(|m| m.name == member) else {
@@ -395,10 +401,17 @@ impl EnsembleSearch<'_> {
             return lacking;
         };
         let start = ((start_ms - first.timestamp_ms) / series.cadence_ms) as usize;
-        let mut offset = 0;
+        // A stage with a gap may sit anywhere between its earliest and latest start, so every
+        // sample it could cover counts.
+        let (mut earliest, mut latest) = (start, start);
         for stage in &self.plan.stages {
             let count = (stage.duration_ms / series.cadence_ms) as usize;
-            for observation in series.observations.iter().skip(start + offset).take(count) {
+            if let Some(gap) = stage.gap {
+                earliest += (gap.min_ms / series.cadence_ms) as usize;
+                latest += (gap.max_ms / series.cadence_ms) as usize;
+            }
+            let span = latest - earliest + count;
+            for observation in series.observations.iter().skip(earliest).take(span) {
                 for constraint in &stage.constraints {
                     if let Constraint::Hard { metric, .. } = constraint {
                         if !observation.values.contains_key(&metric.0) {
@@ -407,7 +420,8 @@ impl EnsembleSearch<'_> {
                     }
                 }
             }
-            offset += count;
+            earliest += count;
+            latest += count;
         }
         lacking
     }

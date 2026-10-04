@@ -21,6 +21,7 @@ pub use ensemble::{
     MissingData, Verdict,
 };
 pub use model::{
-    Comparison, Constraint, Metric, Observation, Plan, Preference, Series, Stage, ValidationError,
+    Comparison, Constraint, Gap, Metric, Observation, Plan, Preference, Series, Stage,
+    ValidationError, MAX_ARRANGEMENTS,
 };
 pub use schedule::{parse_days, Schedule, ScheduleError, Weekday};

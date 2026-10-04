@@ -111,12 +111,14 @@
       "stages": [
         {
           "end_ms": 1789988400000,
+          "gap_ms": 0,
           "name": "flight",
           "start_ms": 1789981200000,
           "suitability": 0.6749999999999999
         },
         {
           "end_ms": 1789992000000,
+          "gap_ms": 0,
           "name": "recovery",
           "start_ms": 1789988400000,
           "suitability": 1.0
@@ -236,12 +238,14 @@
       "stages": [
         {
           "end_ms": 1789984800000,
+          "gap_ms": 0,
           "name": "flight",
           "start_ms": 1789977600000,
           "suitability": 0.575
         },
         {
           "end_ms": 1789988400000,
+          "gap_ms": 0,
           "name": "recovery",
           "start_ms": 1789984800000,
           "suitability": 1.0
