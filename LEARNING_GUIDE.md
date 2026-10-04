@@ -41,13 +41,13 @@ A **value** is the numeric measurement for a metric at one observation. In `wind
 
 ### Units
 
-**Units** explain what a number means: `km/h`, metres, degrees Celsius, percent, and so on. A value of `20` alone is ambiguous. The v0.1 core does not store or convert units; normalize them before calling the engine. The planned unit metadata work will make this easier and safer.
+**Units** explain what a number means: `km/h`, metres, degrees Celsius, percent, and so on. A value of `20` alone is ambiguous. wint converts units for you: give a column or a limit a unit (km/h, °F, mm) and it converts to its standard unit. The list is in `src/units.rs`. A metric outside that list is used as given.
 
 ### Cadence (`cadence_ms`)
 
 The **cadence** is the regular spacing between observations. Hourly forecast rows have a one-hour cadence; a sensor reporting every 15 minutes has a 15-minute cadence.
 
-v0.1 requires regular spacing. If a series says 08:00, 09:00, then 11:00, the missing 10:00 observation makes it invalid. This strict rule prevents the engine from quietly assuming conditions were safe during a gap.
+wint requires regular spacing. If a series says 08:00, 09:00, then 11:00, the missing 10:00 observation makes it invalid. This strict rule prevents the engine from quietly assuming conditions were safe during a gap.
 
 ## The plan: what you ask the engine to find
 
@@ -59,7 +59,7 @@ A **plan** describes one operation you want to carry out and the conditions it n
 
 A **stage** is one consecutive part of a plan. A drone job might have a 15-minute launch stage, a 90-minute survey stage, and a 15-minute recovery stage. Each stage can have its own rules.
 
-Stages are ordered and touch each other in v0.1: recovery begins as soon as survey ends. This is called a **staged operation**.
+Stages are ordered. By default recovery begins as soon as survey ends; a stage can also declare a wait (a gap) before it. This is called a **staged operation**.
 
 ### Duration (`duration_ms`)
 
@@ -101,7 +101,7 @@ The **threshold** is the number in a hard rule. For “wind gust below 35 km/h,�
 
 ### Missing data
 
-If a hard rule needs a value that is missing, v0.1 rejects that candidate. For safety-sensitive work, “we do not know” should not silently mean “safe.” An application can choose a different policy in a later version, but it should make that choice explicit.
+If a hard rule needs a value that is missing, wint rejects that candidate. For safety-sensitive work, “we do not know” should not silently mean “safe.” An application can choose a different policy, but it should make that choice explicit.
 
 ### Soft constraint / preference
 
@@ -131,7 +131,7 @@ A **feasible window** meets every hard constraint for every relevant observation
 
 ### Rejected window
 
-A **rejected window** is a candidate that failed a hard constraint or lacked a required value. v0.1 records the first deciding failure, rather than every failure, so applications can explain quickly why a period was excluded.
+A **rejected window** is a candidate that failed a hard constraint or lacked a required value. wint records the first deciding failure, rather than every failure, so applications can explain quickly why a period was excluded.
 
 ### Evidence / explainability
 
@@ -151,7 +151,7 @@ It is deliberately not a weather probability, a confidence percentage, or a safe
 
 ### Temporal constraint
 
-A **temporal constraint** describes a timing relationship, rather than a measurement limit: for example, stage A must happen before stage B, or a recovery phase must begin within 30 minutes of a survey phase. In v0.1, stages are already consecutive, so their before/after relationship is automatic. More flexible gaps and named relationships are planned for a later release.
+A **temporal constraint** describes a timing relationship, rather than a measurement limit: for example, stage A must happen before stage B, or a recovery phase must begin within 30 minutes of a survey phase. In wint, stages follow each other, and a stage can declare a gap (a minimum and maximum wait) before it. Other named relationships are not built yet.
 
 ### Forecast
 
@@ -163,7 +163,7 @@ In forecasting, a **model** is a mathematical simulation used to estimate future
 
 ### Provenance
 
-**Provenance** means where data came from and how it was transformed: for example, a named weather provider, model run time, original unit, and conversion. It matters for trust and auditing. v0.1 expects the caller to manage it; planned metadata support will carry it with the data.
+**Provenance** means where data came from and how it was transformed: for example, a named weather provider, model run time, original unit, and conversion. It matters for trust and auditing. wint expects the caller to manage it.
 
 ### Adapter
 

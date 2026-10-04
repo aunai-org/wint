@@ -10,9 +10,7 @@ Time-series data (a weather forecast, server metrics, an energy price feed) is c
 
 The engine accepts regular, normalized point observations and declarative plans; searches contiguous windows; enforces hard limits; ranks survivors with deterministic soft preferences; and returns per-window evidence. It supports sequential stages so different phases may have different operating envelopes.
 
-**Domain-neutral.** The engine never interprets a metric name: weather is the first use case, not a dependency. Anything that is a regular table of timestamps and numbers (server load, energy prices, machine states) works with the same plan format. Only the Open-Meteo adapter, the presets and `is_day` are weather-specific, and all are optional. See [docs/EXAMPLES.md](docs/EXAMPLES.md).
-
-Non-goals for v0.1: data collection or weather APIs; probabilistic forecasting/model ensembles; UI; AI advice; geographic interpolation; authentication; scheduling/resources; GRIB, NetCDF, or vendor-format parsing. These are adapter or application concerns.
+Non-goals: producing forecasts or probabilities (wint counts how many forecast versions agree, which is not a probability); a UI (the demo is a separate repository); AI advice; geographic interpolation; authentication; resource scheduling; GRIB, NetCDF or vendor-format parsing. Fetching data is an optional adapter (CSV, Open-Meteo), not part of the core.
 
 ## Users and examples
 
@@ -27,9 +25,9 @@ Examples: a drone team requires two safe flight hours followed by one recovery h
 - **Candidate window**: a half-open interval `[start, end)` beginning at an observation timestamp. A stage covers a contiguous subinterval.
 - **Hard constraint**: every sample in its stage must provide the metric and satisfy its comparison. A failed/missing value rejects the candidate.
 - **Soft constraint**: an ideal value/range with a non-negative weight. Each relevant sample contributes a penalty `min(deviation / scale, 1)`, where `scale` is the caller-declared deviation that counts as a full penalty (positive, in the metric's unit); final suitability is `1 - weighted_mean(penalty)`.
-- **Temporal constraint**: an explicit relationship between stages/intervals, such as `Before`, `After`, or a permitted gap. Adjacent stages in v0.1 are inherently `before/after`; richer named temporal predicates are planned for v0.2.
+- **Temporal constraint**: an explicit relationship between stages/intervals, such as `Before`, `After`, or a permitted gap. Stages follow each other, and a stage may declare a gap (a minimum and maximum wait) before it. Richer named predicates ("same day", "within 30 minutes") are not built yet.
 - **Contiguous duration**: all samples whose timestamps fall in the interval must satisfy applicable constraints. A candidate is only considered when the full duration is covered by the series.
-- **Staged operation**: sequential stages with independently declared limits. No idle gaps exist in v0.1.
+- **Staged operation**: sequential stages with independently declared limits. A stage may declare a gap before it; nothing is checked during the gap.
 
 Observations use a regular cadence. A stage duration must be a positive multiple of the cadence. `Series::new` validates strictly increasing, exactly regular timestamps; this makes coverage and outcomes unambiguous.
 
@@ -149,7 +147,7 @@ src/
 
 `Stage::with_schedule` / `Plan::with_schedule` attach clock windows, and `Series::with_utc_offset` sets the local clock. Key API: `Series::new(cadence_ms, observations) -> Result<Series, ValidationError>`, `Plan::single_stage(...)`, `Plan::new(...)`, and `WindowSearch::new(&series, &plan).run() -> Result<SearchResult, ValidationError>`. `run` validates the plan first (`Plan::validate`), so malformed plans are errors, never silent empty results.
 
-## MVP v0.1 acceptance requirements
+## Core acceptance requirements
 
 1. Validate regular, finite, strictly ordered in-memory observations and cadence-aligned positive stage durations.
 2. Search every cadence-aligned candidate that has complete coverage.
@@ -165,22 +163,12 @@ Unit tests cover series validation, each comparison, boundary semantics, missing
 
 ## Roadmap
 
-- **v0.1:** deterministic in-memory core described above.
-- **v0.2:** serde JSON schema, CSV adapter, named stages, temporal predicates/gaps, unit metadata, richer diagnostics.
-- **v0.3:** uncertainty and multi-model agreement, aggregation/interpolation policies, calendar/resource constraints, CLI.
-- **v1.0:** stable schemas/API, adapter ecosystem, performance benchmarks, operational audit export.
+See [ROADMAP.md](ROADMAP.md) for what is done and what is next. 1.0 means a stable Rust API; the JSON result shapes are already versioned (see Stability).
 
 ## Risks and decisions
 
-Threshold semantics, sampling boundaries, units, and missing data can create false confidence. v0.1 addresses this by strict regular-series validation, half-open ranges, caller-owned normalized units, explicit missing-data failure, and deterministic evidence. It does not infer safety margins. Forecast uncertainty will be represented explicitly before it affects ranking. Keep the core numeric and policy-neutral to avoid locking into weather terminology.
+Threshold semantics, sampling boundaries, units, and missing data can create false confidence. wint addresses this with strict regular-series validation, half-open ranges, unit conversion at the edges, explicit missing-data failure and deterministic evidence. It does not infer safety margins. Forecast uncertainty is shown as agreement counts and never folded into the ranking. Keep the core numeric and policy-neutral to avoid locking into weather terminology.
 
 ## License and repository conventions
 
 Use `MIT` licensing (see `LICENSE`), a Rust 2021 library-first crate, `rustfmt` formatting, `clippy -D warnings` in CI, conventional commits, and a changelog. Public behavior changes require tests and specification updates. Keep core modules dependency-free; optional integrations belong in feature-gated or separate crates. Include `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, and `SECURITY.md` before public release.
-
-## Immediate implementation tasks
-
-1. Establish the crate, public types, validation invariants, and deterministic search loop.
-2. Add hard/soft evaluation, evidence, scoring, sorting, and test fixtures.
-3. Add a JSON/CSV boundary only after the in-memory API is reviewed.
-4. Design v0.2 temporal predicate and unit/provenance schemas against real domain adapters.

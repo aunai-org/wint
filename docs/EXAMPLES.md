@@ -1,25 +1,23 @@
-# Examples: the same engine, different domains
+# Examples
 
-wint answers one question: **when can this job run, given the limits I set?** It does not know what a "wind speed" or a "CPU load" is. The data is a list of named numbers at regular times; the plan is a list of limits on those names. So the weather examples in the [README](../README.md) and [tutorial](TUTORIAL.md) are one use case among many.
+wint answers one question: **when can this job run, given the limits I set?** The data is a table of timestamps and named numbers; the plan is a list of limits on those names. wint never looks at what a name means, so the same plan format works for a wind speed, a CPU load or an electricity price.
 
-This page shows three that have nothing to do with weather. Each one is a pair of files you can run today:
+The weather examples are in the [README](../README.md) and the [tutorial](TUTORIAL.md). This page has three that are not about weather. Each is a pair of files you can run:
 
 ```sh
 cargo run --features json -- --plan examples/domains/<name>/plan.json \
   --series examples/domains/<name>/series.csv --format csv --top 1
 ```
 
-The demo can load all of them from its **Example** menu ([wint-demo](https://github.com/aunai-org/wint-demo)). Every number printed below is produced by these files and is checked by `tests/examples.rs`.
+The demo can load all of them from its **Example** menu ([wint-demo](https://github.com/aunai-org/wint-demo)). The numbers below come from these files and are checked by `tests/examples.rs`.
 
-## What "domain-neutral" means
+## What you can use as data
 
-- **Metric names are yours.** Any text works as a metric (`cpu_load`, `price_eur_kwh`, `oven_free`). The engine only compares numbers; it never interprets the name.
-- **Units are optional.** wint knows a small vocabulary (km/h, °F, mm, ...) and converts it for you, which is handy for weather. A metric outside the vocabulary is used as given, so state its unit in the metric name (`room_humidity_pct`) or keep it consistent in the plan.
-- **The structure is generic.** Hard limits (must hold), soft preferences (rank what passes), several stages with a wait between them, a daily clock window, weekdays. None of it is tied to a field.
-- **A few rules apply everywhere:** values must be finite numbers (a yes/no flag is 0 or 1), the data must be evenly spaced, and a missing reading fails a hard limit instead of passing silently.
-- **What is weather-specific** is only at the edges: the Open-Meteo adapter, the preset plans (`drone`, `outdoor-event`, `field-work`) and the day/night helper `is_day`. You can ignore all of them.
+Any table with a timestamp column and one column per metric, evenly spaced, with numbers in it (a yes/no flag is 0 or 1). Name the metrics whatever you like. A few rules apply:
 
-If you can produce a table of timestamps and numbers (a CSV export, a metrics query, a price feed), you can use wint.
+- A missing reading fails a hard limit instead of passing silently.
+- Units are optional. wint converts the ones it knows (km/h, °F, mm, ...); anything else is used as given, so keep it consistent in the plan or put the unit in the name (`room_humidity_pct`).
+- The weather bits are the Open-Meteo adapter, the presets (`drone`, `outdoor-event`, `field-work`) and the `is_day` helper. You can ignore them.
 
 ## 1. Server deploy window (`examples/domains/server-deploy`)
 
@@ -69,5 +67,3 @@ Only 6 start times work. Mixing at 05:00 is rejected for a reason that is easy t
 1. Put your data in a CSV: first column a timestamp (ISO 8601 with a zone, or Unix seconds), then one column per metric, evenly spaced.
 2. Write a plan (see [`examples/plan.json`](../examples/plan.json) and the format summary in the README): stages with `duration_ms`, hard and soft constraints, optionally `schedule` and `gap`.
 3. Run it with the command above, or paste the plan into the demo and upload the CSV.
-
-Domains that fit well: maintenance and deploy windows, energy and EV scheduling, greenhouse and irrigation timing, lab and factory batch steps, event planning, anything that is "find me a good stretch of time given these readings".
