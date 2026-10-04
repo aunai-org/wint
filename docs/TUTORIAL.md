@@ -74,6 +74,37 @@ cargo run --features net -- --preset field-work --hours 3 --open-meteo 52.52,13.
 
 Each window reports how many models it fits ("fits in 3 of 4 that can answer"), which rule blocked the others, and which models could not answer at all (a model may not provide visibility, or its forecast may end early). Use `--ensemble icon_seamless` for about 40 ensemble members instead. Two cautions: this is a count of forecast versions, not a probability, because models share data and are not independent; and the ensemble service does not provide visibility or rain probability, so presets with rules on those say so instead of guessing.
 
+## 6. Jobs with a wait in the middle: gaps
+
+Some jobs have steps with a wait between them. Painting a fence: apply the paint (2 hours, dry and calm), let it cure (4 to 12 hours), then apply a clear coat (1 hour, dry). The weather during the cure does not matter, only the two steps do. Describe the wait as a `gap` on the later stage ([`examples/paint-plan.json`](../examples/paint-plan.json)):
+
+```json
+{ "name": "clear coat", "duration_ms": 3600000,
+  "gap": { "min_ms": 14400000, "max_ms": 43200000 },
+  "constraints": [ { "type": "hard", "name": "dry", "metric": "precipitation", "comparison": "<=", "threshold": 0.1 } ] }
+```
+
+`gap` means: this stage starts between 4 and 12 hours after the previous one ends. Try it on a made-up Saturday that is dry at 08:00-10:00, rainy from 10:00 to 18:00 and dry again after ([`examples/paint-series.csv`](../examples/paint-series.csv)):
+
+```sh
+cargo run --features json -- --plan examples/paint-plan.json --series examples/paint-series.csv --format csv --top 1
+```
+
+```text
+#1 2026-10-10T08:00Z -> 2026-10-10T19:00Z  suitability 1.00
+   paint        2026-10-10T08:00Z -> 2026-10-10T10:00Z  suitability 1.00
+   clear coat   2026-10-10T18:00Z -> 2026-10-10T19:00Z  suitability 1.00
+```
+
+Paint at 08:00, and the clear coat goes on at 18:00. The earliest allowed time for it was 14:00, but it rains until 18:00, so wint tried each later start inside the allowed wait and used the first dry one. The rain in between is never checked. That is also why a range helps: with a fixed "exactly 6 hours" the clear coat would land at 16:00, in the rain, and the whole day would be rejected.
+
+How to read the result:
+
+- A window is still named by when its **first** stage starts. For each start, wint tries every allowed gap and keeps the best layout (highest score, then the shortest wait). With `--json`, each stage reports its `gap_ms`.
+- If no gap works, the start is rejected and the reason names the stage that failed (`--rejected`). The paint starts between 09:00 and 17:00 above are rejected because it is already raining while painting.
+- Nothing is checked *during* the gap. If rain would ruin the paint while it cures, that is not expressible yet.
+- A gap must be a whole number of samples (whole hours for hourly data) and cannot be on the first stage.
+
 ## What to remember
 
 - The score ranks windows that already pass every hard limit. It is not a probability, and not a safety certification.

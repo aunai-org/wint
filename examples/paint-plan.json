@@ -1,0 +1,43 @@
+{
+  "name": "paint-fence",
+  "stages": [
+    {
+      "name": "paint",
+      "duration_ms": 7200000,
+      "constraints": [
+        {
+          "type": "hard",
+          "name": "dry",
+          "metric": "precipitation",
+          "comparison": "<=",
+          "threshold": 0.1
+        },
+        {
+          "type": "hard",
+          "name": "calm",
+          "metric": "wind_speed",
+          "comparison": "<=",
+          "threshold": 20,
+          "unit": "km/h"
+        }
+      ]
+    },
+    {
+      "name": "clear coat",
+      "duration_ms": 3600000,
+      "gap": {
+        "min_ms": 14400000,
+        "max_ms": 43200000
+      },
+      "constraints": [
+        {
+          "type": "hard",
+          "name": "dry",
+          "metric": "precipitation",
+          "comparison": "<=",
+          "threshold": 0.1
+        }
+      ]
+    }
+  ]
+}

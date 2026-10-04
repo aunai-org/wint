@@ -201,6 +201,31 @@ fn a_series_too_short_for_the_minimum_span_gives_nothing() {
         .is_empty());
 }
 
+/// The tutorial's paint-the-fence example must keep giving the answer it prints.
+#[cfg(feature = "json")]
+#[test]
+fn tutorial_paint_example() {
+    use env_operability::adapters::csv;
+    let read = |f: &str| {
+        std::fs::read_to_string(format!("{}/examples/{f}", env!("CARGO_MANIFEST_DIR"))).unwrap()
+    };
+    let series = csv::parse(&read("paint-series.csv")).unwrap();
+    let plan: Plan = serde_json::from_str(&read("paint-plan.json")).unwrap();
+    let result = WindowSearch::new(&series, &plan).run().unwrap();
+    let best = &result.feasible[0];
+    // Saturday 2026-10-10 08:00 UTC; the clear coat goes on at 18:00 after an 8 hour wait.
+    let sat_8 = series.observations[0].timestamp_ms;
+    assert_eq!(best.start_ms, sat_8);
+    assert_eq!(best.stages[1].start_ms, sat_8 + 10 * H);
+    assert_eq!(best.stages[1].gap_ms, 8 * H);
+    assert_eq!((result.feasible.len(), result.rejected.len()), (21, 9));
+    // Paint starts between 09:00 and 17:00 fail while painting, not in the clear coat.
+    assert!(result
+        .rejected
+        .iter()
+        .all(|r| r.failure.stage == "paint" && r.start_ms > sat_8 && r.start_ms < sat_8 + 10 * H));
+}
+
 fn member(name: &str, s: Series) -> Member {
     Member {
         name: name.into(),
