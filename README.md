@@ -2,7 +2,7 @@
 
 `wint` finds the time windows when a job can run, given the limits you set, and explains why the others cannot. You give it readings over time (a weather forecast, server metrics, energy prices) and a plan with your limits. It returns ranked windows and the evidence behind every decision.
 
-Worked examples, weather and otherwise, are in [docs/EXAMPLES.md](docs/EXAMPLES.md). The [tutorial](docs/TUTORIAL.md) walks through a first run, the [plain-language learning guide](LEARNING_GUIDE.md) explains the ideas, and [the specification](SPEC.md) has the details.
+Worked examples are in [docs/EXAMPLES.md](docs/EXAMPLES.md). The [tutorial](docs/TUTORIAL.md) walks through a first run, the [plain-language learning guide](LEARNING_GUIDE.md) explains the ideas, and [the specification](SPEC.md) has the details.
 
 ## Command line
 
