@@ -60,6 +60,8 @@ Also exported: `parseCsv`, `listPresets`, `listMetrics`, `version`, and for seve
 
 The engine returns facts and decisions (numbers, enums, identifiers), never display text: a limit comes back as `{"type": "comparison", "comparison": "<=", "threshold": 10}`, a clock check as minutes and an offset. Wording, rounding, units and colors are for your application to choose; `wint::present` offers a ready-made default for Rust programs (`describe_expectation`, `describe_reading`, `format_value`, `format_utc`), and the CLI uses it. See the layering rule in the [specification](SPEC.md#architecture).
 
+Results carry a `schema_version` (currently `1`). The rules for what may change are in the specification's [Stability](SPEC.md#stability) section, and the exact JSON of a single-series result, an ensemble result and a plan is pinned in [`tests/golden/`](tests/golden): [`single_result.json`](tests/golden/single_result.json), [`ensemble_result.json`](tests/golden/ensemble_result.json) and [`plan.json`](tests/golden/plan.json).
+
 ## Uncertainty (ensembles)
 
 `EnsembleSearch` runs the search on several forecast versions (models or ensemble members) and reports, per window, how many fit: "fits in 4 of 5 members", with what blocked the others and which members could not answer. See the [specification](SPEC.md#uncertainty-ensembles-and-agreement) for what the numbers mean. Agreement is **not** a probability.
