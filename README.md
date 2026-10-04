@@ -1,8 +1,15 @@
 # wint
 
-`wint` finds the time windows when a job can run, given the limits you set, and explains why the others cannot. You give it readings over time (a weather forecast, server metrics, energy prices) and a plan with your limits. It returns ranked windows and the evidence behind every decision.
+`wint` finds the time windows when a job can run, given the limits you set, and explains why the others cannot. It is a deterministic Rust engine: you give it readings over time (a forecast, server metrics, energy prices) and a plan of limits, and it returns ranked windows with the evidence behind every decision. Weather forecasts are the first and best-supported use case; the engine itself works with any regular table of timestamps and numbers.
 
-Worked examples are in [docs/EXAMPLES.md](docs/EXAMPLES.md). The [tutorial](docs/TUTORIAL.md) walks through a first run, the [plain-language learning guide](LEARNING_GUIDE.md) explains the ideas, and [the specification](SPEC.md) has the details.
+It deliberately starts below data ingestion and user interfaces: callers supply normalized observations and receive ranked feasible windows.
+
+## Domain-neutral by design
+
+Weather is the first use case, but the engine itself is not about weather. It takes a table of timestamps and named numbers and a plan of limits on those names, and tells you when the job can run and why not otherwise. A CPU load, an electricity price or an oven flag work exactly like a wind speed. Only the Open-Meteo adapter and the preset plans are weather-specific, and both are optional. See [docs/EXAMPLES.md](docs/EXAMPLES.md) for worked examples: weather, a server deploy window, EV charging and a bakery batch with a proofing wait.
+
+See [the specification](SPEC.md) for the product and implementation plan.
+New to the field? Start with the [plain-language learning guide](LEARNING_GUIDE.md).
 
 ## Command line
 
