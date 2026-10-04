@@ -1,4 +1,4 @@
-//! Deterministic, in-memory environmental operability window search.
+//! Deterministic, in-memory search for the time windows when a job can run within declared limits.
 
 pub mod adapters;
 mod engine;

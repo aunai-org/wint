@@ -2,8 +2,8 @@
 //! keep the numbers printed there true, and show that nothing in the engine is about weather.
 #![cfg(feature = "json")]
 
-use env_operability::adapters::csv;
-use env_operability::{Plan, SearchResult, Series, WindowSearch};
+use wint::adapters::csv;
+use wint::{Plan, SearchResult, Series, WindowSearch};
 
 const H: i64 = 3_600_000;
 

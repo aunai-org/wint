@@ -13,7 +13,7 @@ OUT="${1:-pkg}"
 cargo build --release --lib --target wasm32-unknown-unknown --features wasm
 rm -rf "$OUT"
 wasm-bindgen --target web --out-dir "$OUT" --out-name wint \
-  target/wasm32-unknown-unknown/release/env_operability.wasm
+  target/wasm32-unknown-unknown/release/wint.wasm
 
 # Optional extra shrink if binaryen is installed.
 if command -v wasm-opt >/dev/null 2>&1; then
@@ -27,7 +27,7 @@ const fs = require("fs");
 const pkg = {
   name: process.env.NAME,
   version: process.env.VERSION,
-  description: "Deterministic, explainable operability windows from environmental time series (WebAssembly build of wint)",
+  description: "Finds the time windows when a job can run within the limits you set, and explains why the others cannot (WebAssembly build of wint)",
   type: "module",
   main: "wint.js",
   module: "wint.js",

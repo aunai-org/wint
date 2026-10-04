@@ -1,4 +1,4 @@
-use env_operability::{
+use wint::{
     present, ClockSpan, Comparison, Constraint, Expectation, Metric, Observation, Plan, Schedule,
     Series, Stage, ValidationError, Weekday, WindowSearch,
 };
@@ -307,16 +307,16 @@ fn sample_offsets_are_range_checked_and_must_agree_across_an_ensemble() {
         bad,
         Err(ValidationError::InvalidUtcOffset { minutes: 900 })
     ));
-    let member = |name: &str, series: Series| env_operability::Member {
+    let member = |name: &str, series: Series| wint::Member {
         name: name.into(),
         series,
     };
-    let same = env_operability::Ensemble::new(vec![
+    let same = wint::Ensemble::new(vec![
         member("a", berlin_dst(true)),
         member("b", berlin_dst(true)),
     ]);
     assert!(same.is_ok());
-    let differ = env_operability::Ensemble::new(vec![
+    let differ = wint::Ensemble::new(vec![
         member("a", berlin_dst(true)),
         member("b", berlin_dst(false)),
     ]);

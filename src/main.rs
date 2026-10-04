@@ -1,15 +1,15 @@
 //! Command-line front end. Run with `--help` for usage.
 
-use env_operability::adapters::{csv, AdapterError};
-use env_operability::present::{describe_expectation, describe_reading, format_utc};
-use env_operability::{
+use std::process::ExitCode;
+use wint::adapters::{csv, AdapterError};
+use wint::present::{describe_expectation, describe_reading, format_utc};
+use wint::{
     presets, Ensemble, EnsembleResult, EnsembleSearch, Plan, Schedule, SearchResult, Series,
     WindowSearch,
 };
-use std::process::ExitCode;
 
 const USAGE: &str = "\
-Usage: env-operability <plan> <series> [options]
+Usage: wint <plan> <series> [options]
 
 Plan (one of):
   --plan <plan.json>        Plan file (see examples/plan.json)
@@ -245,8 +245,8 @@ fn parse_fraction(flag: &str, text: &str) -> Result<f64, String> {
         .ok_or_else(|| format!("{flag} must be greater than 0 and at most 1"))
 }
 
-fn wint_days(text: &str) -> Result<Vec<env_operability::Weekday>, env_operability::ScheduleError> {
-    env_operability::parse_days(text)
+fn wint_days(text: &str) -> Result<Vec<wint::Weekday>, wint::ScheduleError> {
+    wint::parse_days(text)
 }
 
 /// Parses `HH:MM-HH:MM` into a daily window.
@@ -340,7 +340,7 @@ fn adapter_error(what: &str, error: AdapterError) -> String {
 }
 
 fn load_data(source: &SeriesSource) -> Result<Data, String> {
-    use env_operability::adapters::open_meteo as om;
+    use wint::adapters::open_meteo as om;
     match source {
         SeriesSource::OpenMeteo {
             latitude,

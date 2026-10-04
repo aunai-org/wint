@@ -1,9 +1,9 @@
-use env_operability::units::Unit;
-use env_operability::{
+use std::collections::BTreeMap;
+use wint::units::Unit;
+use wint::{
     Comparison, Constraint, Metric, Observation, Plan, Preference, Series, ValidationError,
     WindowSearch,
 };
-use std::collections::BTreeMap;
 
 fn units(pairs: &[(&str, Unit)]) -> BTreeMap<String, Unit> {
     pairs.iter().map(|(k, u)| (k.to_string(), *u)).collect()

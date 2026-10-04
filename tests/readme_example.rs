@@ -1,4 +1,4 @@
-use env_operability::{Comparison, Constraint, Metric, Observation, Plan, Series, WindowSearch};
+use wint::{Comparison, Constraint, Metric, Observation, Plan, Series, WindowSearch};
 
 #[test]
 fn readme_example_finds_two_windows() {

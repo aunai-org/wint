@@ -1,21 +1,21 @@
 [package]
-name = "env-operability"
+name = "wint"
 version = "0.1.0"
 edition = "2021"
-description = "Deterministic, domain-neutral environmental operability window engine"
+description = "Deterministic, explainable engine that finds the time windows when a job can run within the limits you set"
 license = "MIT"
 repository = "https://github.com/aunai-org/wint"
-keywords = ["environment", "operability", "constraints", "scheduling"]
+keywords = ["time-series", "scheduling", "constraints", "forecast", "windows"]
 categories = ["science", "algorithms"]
 
 [lib]
-name = "env_operability"
+name = "wint"
 path = "src/lib.rs"
 # cdylib is only used by the `wasm` feature build (see scripts/build-wasm.sh).
 crate-type = ["rlib", "cdylib"]
 
 [[bin]]
-name = "env-operability"
+name = "wint"
 path = "src/main.rs"
 required-features = ["json"]
 

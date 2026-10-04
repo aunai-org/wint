@@ -1,7 +1,7 @@
 #![cfg(feature = "json")]
 
-use env_operability::{Plan, SearchResult, Series, WindowSearch};
 use std::process::Command;
+use wint::{Plan, SearchResult, Series, WindowSearch};
 
 const PLAN: &str = include_str!("../examples/plan.json");
 const SERIES: &str = include_str!("../examples/series.json");
@@ -34,12 +34,12 @@ fn soft_weight_defaults_to_one_and_plan_round_trips() {
     assert_eq!(serde_json::from_str::<Plan>(&text).unwrap(), plan);
     let soft = r#"{"type":"soft","name":"n","metric":"m",
         "preference":{"kind":"maximize","ideal":1,"scale":2}}"#;
-    let c: env_operability::Constraint = serde_json::from_str(soft).unwrap();
-    assert!(matches!(c, env_operability::Constraint::Soft { weight, .. } if weight == 1.0));
+    let c: wint::Constraint = serde_json::from_str(soft).unwrap();
+    assert!(matches!(c, wint::Constraint::Soft { weight, .. } if weight == 1.0));
 }
 
 fn cli() -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_env-operability"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_wint"));
     cmd.args([
         "--plan",
         "examples/plan.json",
@@ -74,15 +74,13 @@ fn cli_text_output_lists_windows_and_rejections() {
 
 #[test]
 fn cli_reports_errors_with_nonzero_exit() {
-    let missing = Command::new(env!("CARGO_BIN_EXE_env-operability"))
+    let missing = Command::new(env!("CARGO_BIN_EXE_wint"))
         .args(["--plan", "nope.json", "--series", "examples/series.json"])
         .output()
         .unwrap();
     assert_eq!(missing.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&missing.stderr).contains("cannot read plan"));
-    let usage = Command::new(env!("CARGO_BIN_EXE_env-operability"))
-        .output()
-        .unwrap();
+    let usage = Command::new(env!("CARGO_BIN_EXE_wint")).output().unwrap();
     assert_eq!(usage.status.code(), Some(2));
 }
 
@@ -97,12 +95,12 @@ fn json_series_and_plan_units_are_converted() {
     assert!((series.observations[0].values["wind_speed"] - 10.0).abs() < 1e-9);
     assert!((series.observations[0].values["temperature"] - 100.0).abs() < 1e-9);
 
-    let constraint: env_operability::Constraint = serde_json::from_str(
+    let constraint: wint::Constraint = serde_json::from_str(
         r#"{"type":"hard","name":"w","metric":"wind_speed","comparison":"<","threshold":20,"unit":"kn"}"#,
     )
     .unwrap();
     assert!(matches!(constraint,
-        env_operability::Constraint::Hard { threshold, .. } if (threshold - 10.288888).abs() < 1e-4));
+        wint::Constraint::Hard { threshold, .. } if (threshold - 10.288888).abs() < 1e-4));
 }
 
 #[test]
@@ -115,7 +113,7 @@ fn json_unknown_units_are_errors() {
         bad_series.to_string().contains("unknown unit `furlongs`"),
         "{bad_series}"
     );
-    let bad_constraint = serde_json::from_str::<env_operability::Constraint>(
+    let bad_constraint = serde_json::from_str::<wint::Constraint>(
         r#"{"type":"hard","name":"w","metric":"wind_speed","comparison":"<","threshold":1,"unit":"furlongs"}"#,
     )
     .unwrap_err();
@@ -126,7 +124,7 @@ fn json_unknown_units_are_errors() {
 }
 
 fn run_cli(args: &[&str]) -> std::process::Output {
-    Command::new(env!("CARGO_BIN_EXE_env-operability"))
+    Command::new(env!("CARGO_BIN_EXE_wint"))
         .args(args)
         .output()
         .unwrap()
@@ -301,7 +299,7 @@ fn cli_says_when_no_member_provides_a_metric() {
 
 #[test]
 fn cli_reads_native_ensemble_json_and_validates_flags() {
-    use env_operability::{Ensemble, Member, Observation, Series};
+    use wint::{Ensemble, Member, Observation, Series};
     let member = |name: &str, wind: f64| Member {
         name: name.into(),
         series: Series::new(

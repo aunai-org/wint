@@ -1,10 +1,10 @@
-# wint - An Environmental Operability Engine — product and technical specification
+# wint — product and technical specification
 
 ## Vision and problem
 
-Environmental data is commonly presented as forecasts, charts, or domain-specific go/no-go advice. Operators instead need an auditable answer to: **when can this operation be performed, for how long, and why?**
+Time-series data (a weather forecast, server metrics, an energy price feed) is commonly presented as charts or domain-specific go/no-go advice. Operators instead need an auditable answer to: **when can this operation be performed, for how long, and why?**
 
-`wint` is an open-source, domain-neutral Rust library and CLI that turns normalized environmental time series plus declared operating rules into feasible, ranked, explainable time windows. It is an engine, not a forecast provider or a vertical application. It can power marine workability, field work, drone operations, observatory scheduling, events, maintenance, or industrial planning without embedding any one domain’s policy.
+`wint` is an open-source, domain-neutral Rust library and CLI that turns normalized time series plus declared operating rules into feasible, ranked, explainable time windows. It is an engine, not a forecast provider or a vertical application. It can power marine workability, field work, drone operations, observatory scheduling, events, maintenance, or industrial planning without embedding any one domain’s policy.
 
 ## Scope
 

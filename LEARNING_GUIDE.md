@@ -12,9 +12,9 @@ The same idea can apply to a drone flight, a boat trip, an outdoor event, telesc
 
 ## The data: what the engine receives
 
-### Environmental time series
+### Time series
 
-A **time series** is simply a list of measurements taken over time. A weather forecast is one example.
+A **time series** is simply a list of measurements taken over time. A weather forecast is one example; server load, electricity prices and machine readings are others.
 
 ```text
 Time        Wind speed    Rain chance    Temperature
@@ -159,7 +159,7 @@ A **forecast** is a prediction of future conditions. The engine does not produce
 
 ### Model and ensemble
 
-In environmental science, a **model** is a mathematical simulation used to estimate future conditions. An **ensemble** is a group of model runs or forecasts. Agreement between them can provide useful information about uncertainty. This is intentionally outside v0.1; future versions can represent this explicitly instead of pretending a single forecast is certain.
+In forecasting, a **model** is a mathematical simulation used to estimate future conditions. An **ensemble** is a group of model runs or forecasts. Agreement between them says something about uncertainty. wint can compare several versions of a forecast and report, for each window, how many of them it fits ("fits in 3 of 4"); see the "Uncertainty" section of the [specification](SPEC.md). That count is not a probability.
 
 ### Provenance
 

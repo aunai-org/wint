@@ -1,4 +1,4 @@
-use env_operability::{
+use wint::{
     Comparison, Constraint, Ensemble, EnsembleSearch, Member, Metric, Observation, Plan,
     Preference, Schedule, Series, ValidationError, Verdict, WindowSearch,
 };
@@ -38,10 +38,7 @@ fn wind_plan(hours: i64, limit: f64) -> Plan {
         )],
     )
 }
-fn window(
-    result: &env_operability::EnsembleResult,
-    start_h: i64,
-) -> &env_operability::EnsembleWindow {
+fn window(result: &wint::EnsembleResult, start_h: i64) -> &wint::EnsembleWindow {
     result
         .windows
         .iter()

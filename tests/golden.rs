@@ -4,12 +4,10 @@
 //! Removing, renaming or reinterpreting a field also means raising `SCHEMA_VERSION`.
 #![cfg(feature = "json")]
 
-use env_operability::adapters::open_meteo;
-use env_operability::{
-    EnsembleSearch, Plan, Schedule, Series, Weekday, WindowSearch, SCHEMA_VERSION,
-};
 use serde_json::Value;
 use std::path::PathBuf;
+use wint::adapters::open_meteo;
+use wint::{EnsembleSearch, Plan, Schedule, Series, Weekday, WindowSearch, SCHEMA_VERSION};
 
 fn path(name: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(name)

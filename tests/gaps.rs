@@ -1,4 +1,4 @@
-use env_operability::{
+use wint::{
     Comparison, Constraint, Ensemble, EnsembleSearch, Gap, Member, Metric, Observation, Plan,
     Preference, Series, Stage, ValidationError, Verdict, WindowSearch, MAX_ARRANGEMENTS,
 };
@@ -205,7 +205,7 @@ fn a_series_too_short_for_the_minimum_span_gives_nothing() {
 #[cfg(feature = "json")]
 #[test]
 fn tutorial_paint_example() {
-    use env_operability::adapters::csv;
+    use wint::adapters::csv;
     let read = |f: &str| {
         std::fs::read_to_string(format!("{}/examples/{f}", env!("CARGO_MANIFEST_DIR"))).unwrap()
     };

@@ -40,12 +40,12 @@ fn the_engine_builds_no_display_text() {
 
 #[cfg(feature = "json")]
 mod results_are_data {
-    use env_operability::{
+    use serde_json::Value;
+    use std::collections::BTreeSet;
+    use wint::{
         Comparison, Constraint, Ensemble, EnsembleSearch, Member, Metric, Observation, Plan,
         Preference, Schedule, Series, Stage, WindowSearch,
     };
-    use serde_json::Value;
-    use std::collections::BTreeSet;
 
     const H: i64 = 3_600_000;
 
