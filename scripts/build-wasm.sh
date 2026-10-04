@@ -20,9 +20,9 @@ if command -v wasm-opt >/dev/null 2>&1; then
   wasm-opt -Oz "$OUT/wint_bg.wasm" -o "$OUT/wint_bg.wasm"
 fi
 # Make ./pkg a valid npm package (not published; run `npm publish` from there when ready).
-# The package is named `wint-engine` (`wint` is taken on npm); override with WINT_NPM_NAME, e.g. a scoped name.
+# The package is named `wint-core` (`wint` is taken on npm); override with WINT_NPM_NAME, e.g. a scoped name.
 VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
-NAME="${WINT_NPM_NAME:-wint-engine}" VERSION="$VERSION" OUT="$OUT" node -e '
+NAME="${WINT_NPM_NAME:-wint-core}" VERSION="$VERSION" OUT="$OUT" node -e '
 const fs = require("fs");
 const pkg = {
   name: process.env.NAME,
