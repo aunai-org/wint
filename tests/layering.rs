@@ -40,7 +40,6 @@ fn the_engine_builds_no_display_text() {
 
 #[cfg(feature = "json")]
 mod results_are_data {
-    use super::*;
     use env_operability::{
         Comparison, Constraint, Ensemble, EnsembleSearch, Member, Metric, Observation, Plan,
         Preference, Schedule, Series, Stage, WindowSearch,
