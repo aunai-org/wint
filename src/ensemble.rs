@@ -370,12 +370,12 @@ impl<'a> EnsembleSearch<'a> {
                 members,
             })
             .collect();
-        blockers.sort_by(|a, b| b.members.cmp(&a.members));
+        blockers.sort_by_key(|a| std::cmp::Reverse(a.members));
         let mut missing: Vec<MissingData> = missing
             .into_iter()
             .map(|(metric, members)| MissingData { metric, members })
             .collect();
-        missing.sort_by(|a, b| b.members.cmp(&a.members));
+        missing.sort_by_key(|a| std::cmp::Reverse(a.members));
         EnsembleWindow {
             start_ms,
             end_ms,
