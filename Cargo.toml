@@ -8,6 +8,10 @@ repository = "https://github.com/aunai-org/wint"
 keywords = ["time-series", "scheduling", "constraints", "forecast", "windows"]
 categories = ["science", "algorithms"]
 
+[package.metadata.docs.rs]
+# docs.rs builds with every feature so the CLI, JSON and adapter items are documented.
+all-features = true
+
 [lib]
 name = "wint"
 path = "src/lib.rs"
