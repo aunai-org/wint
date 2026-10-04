@@ -10,6 +10,8 @@ Environmental data is commonly presented as forecasts, charts, or domain-specifi
 
 The engine accepts regular, normalized point observations and declarative plans; searches contiguous windows; enforces hard limits; ranks survivors with deterministic soft preferences; and returns per-window evidence. It supports sequential stages so different phases may have different operating envelopes.
 
+**Domain-neutral.** The engine never interprets a metric name: weather is the first use case, not a dependency. Anything that is a regular table of timestamps and numbers (server load, energy prices, machine states) works with the same plan format. Only the Open-Meteo adapter, the presets and `is_day` are weather-specific, and all are optional. See [docs/EXAMPLES.md](docs/EXAMPLES.md).
+
 Non-goals for v0.1: data collection or weather APIs; probabilistic forecasting/model ensembles; UI; AI advice; geographic interpolation; authentication; scheduling/resources; GRIB, NetCDF, or vendor-format parsing. These are adapter or application concerns.
 
 ## Users and examples

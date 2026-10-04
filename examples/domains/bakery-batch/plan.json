@@ -1,0 +1,49 @@
+{
+  "name": "bakery-batch",
+  "stages": [
+    {
+      "name": "mix",
+      "duration_ms": 3600000,
+      "constraints": [
+        {
+          "type": "hard",
+          "name": "dry room",
+          "metric": "room_humidity_pct",
+          "comparison": "<=",
+          "threshold": 60
+        }
+      ],
+      "schedule": {
+        "from": "05:00",
+        "to": "13:00"
+      }
+    },
+    {
+      "name": "bake",
+      "duration_ms": 3600000,
+      "gap": {
+        "min_ms": 7200000,
+        "max_ms": 14400000
+      },
+      "constraints": [
+        {
+          "type": "hard",
+          "name": "oven free",
+          "metric": "oven_free",
+          "comparison": "==",
+          "threshold": 1
+        },
+        {
+          "type": "soft",
+          "name": "cheap power",
+          "metric": "power_price",
+          "preference": {
+            "kind": "minimize",
+            "ideal": 0.15,
+            "scale": 0.15
+          }
+        }
+      ]
+    }
+  ]
+}

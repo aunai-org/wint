@@ -1,0 +1,32 @@
+{
+  "name": "ev-charging",
+  "stages": [
+    {
+      "name": "charge",
+      "duration_ms": 14400000,
+      "schedule": {
+        "from": "18:00",
+        "to": "08:00"
+      },
+      "constraints": [
+        {
+          "type": "hard",
+          "name": "cleaner grid",
+          "metric": "carbon_g_kwh",
+          "comparison": "<=",
+          "threshold": 300
+        },
+        {
+          "type": "soft",
+          "name": "cheap power",
+          "metric": "price_eur_kwh",
+          "preference": {
+            "kind": "minimize",
+            "ideal": 0.1,
+            "scale": 0.2
+          }
+        }
+      ]
+    }
+  ]
+}

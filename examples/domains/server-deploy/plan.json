@@ -1,0 +1,39 @@
+{
+  "name": "server-deploy",
+  "stages": [
+    {
+      "name": "deploy",
+      "duration_ms": 7200000,
+      "schedule": {
+        "from": "20:00",
+        "to": "06:00"
+      },
+      "constraints": [
+        {
+          "type": "hard",
+          "name": "low load",
+          "metric": "cpu_load",
+          "comparison": "<",
+          "threshold": 60
+        },
+        {
+          "type": "hard",
+          "name": "short queue",
+          "metric": "queue_depth",
+          "comparison": "<=",
+          "threshold": 20
+        },
+        {
+          "type": "soft",
+          "name": "quiet servers",
+          "metric": "cpu_load",
+          "preference": {
+            "kind": "minimize",
+            "ideal": 25,
+            "scale": 40
+          }
+        }
+      ]
+    }
+  ]
+}

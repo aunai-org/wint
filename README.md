@@ -4,6 +4,10 @@
 
 It deliberately starts below data ingestion and user interfaces: callers supply normalized observations and receive ranked feasible windows. Version 0.1 has no network access, weather-provider coupling, AI, or geospatial file parsers.
 
+## Domain-neutral by design
+
+The name says weather, and weather is the first use case, but the engine itself is not about weather. It takes a table of timestamps and named numbers and a plan of limits on those names, and tells you when the job can run and why not otherwise. A CPU load, an electricity price or an oven flag work exactly like a wind speed. Only the Open-Meteo adapter and the preset plans are weather-specific, and both are optional. See [docs/EXAMPLES.md](docs/EXAMPLES.md) for what that means in detail and three worked non-weather examples (a server deploy window, EV charging, a bakery batch with a proofing wait).
+
 See [the specification](SPEC.md) for the product and implementation plan.
 New to the field? Start with the [plain-language learning guide](LEARNING_GUIDE.md).
 
