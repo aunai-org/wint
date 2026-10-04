@@ -104,6 +104,7 @@ impl Ensemble {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize))]
 #[cfg_attr(feature = "json", serde(rename_all = "snake_case"))]
+#[non_exhaustive]
 pub enum Verdict {
     /// The window passes every hard constraint in this member.
     Feasible,
@@ -170,6 +171,8 @@ pub struct EnsembleWindow {
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize))]
 pub struct EnsembleResult {
+    /// [`crate::SCHEMA_VERSION`] at the time the result was produced.
+    pub schema_version: u32,
     pub members: Vec<String>,
     pub min_agreement: f64,
     pub min_coverage: f64,
@@ -300,6 +303,7 @@ impl<'a> EnsembleSearch<'a> {
             .map(str::to_string)
             .collect();
         Ok(EnsembleResult {
+            schema_version: crate::SCHEMA_VERSION,
             members: members.iter().map(|m| m.name.clone()).collect(),
             min_agreement: self.min_agreement,
             min_coverage: self.min_coverage,

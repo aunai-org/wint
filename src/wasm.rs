@@ -19,6 +19,12 @@ pub fn version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
 
+/// Version of the JSON shape of results (the `schema_version` field they carry).
+#[wasm_bindgen(js_name = schemaVersion)]
+pub fn schema_version() -> u32 {
+    crate::SCHEMA_VERSION
+}
+
 /// Runs a window search. `series_json` and `plan_json` use the CLI formats
 /// (including `units` / `unit` conversion); returns the result as JSON.
 #[wasm_bindgen]

@@ -77,6 +77,16 @@ Members must share cadence, timestamps and UTC offset exactly (`Ensemble::new` c
 
 **Open-Meteo input.** `adapters::open_meteo::parse_ensemble` reads both services that return parallel versions. The *multi-model* forecast (`models=a,b,c`) names columns `<variable>_<model>`; the *ensemble* API names them `<variable>_member01` and so on, plus an unsuffixed control run. A variable with a single unsuffixed column (`is_day`) is shared by every member. A column that is entirely `null` carries no readings and is skipped (the ensemble API returns visibility and rain probability this way, with the unit `undefined`); a column with real values and an unrecognised unit is an error, never a guess. The consequence is visible and intended: rules that use a metric nobody provides cannot be judged, every window reports "cannot say", and the tools say so by name instead of silently passing or failing. Real examples seen at the time of writing: in a 4-model forecast ECMWF and Meteo-France provided no visibility; the ensemble API provided none for any member.
 
+## Stability
+
+What applications can rely on, now that the result shapes are settled (the crate itself is still 0.x):
+
+- **Results carry `schema_version`** (currently `1`; `SCHEMA_VERSION` in Rust, `schemaVersion()` in JS). It changes only when an existing field is removed, renamed or reinterpreted. Adding a field or an enum variant is *not* a version change, so **readers must ignore fields and `type`/`kind` values they do not know** (show nothing, or "unknown", rather than failing).
+- **Public enums are `#[non_exhaustive]`** (`Expectation`, `Verdict`, `Comparison`, `Preference`, `Constraint`, `Unit`, `Dimension` and the error enums), so a new variant is a minor release. Rust code that matches on them needs a wildcard arm.
+- **Inputs are plans, series and ensembles in the formats of this document.** New optional input fields may appear; existing ones keep their meaning. Plans do not carry a version: a plan that was valid stays valid.
+- **Golden files** (`tests/golden/`) pin the exact JSON of a single-series result, an ensemble result and a plan. A change to any shape fails `tests/golden.rs`; for an added field, review the diff and regenerate with `WINT_UPDATE_GOLDEN=1 cargo test --all-features --test golden`.
+- **Not frozen yet:** the Rust builder API details, the Open-Meteo adapter variable list, preset thresholds, and the CLI's human-readable text (use `--json`). Gaps between stages and daylight-saving offsets will add fields, which by the rules above is compatible.
+
 ## Data model
 
 ```text

@@ -1,0 +1,4015 @@
+{
+  "members": [
+    "control",
+    "member01",
+    "member02",
+    "member03",
+    "member04",
+    "member05"
+  ],
+  "min_agreement": 1.0,
+  "min_coverage": 0.5,
+  "schema_version": 1,
+  "unprovided": [
+    "precipitation_probability"
+  ],
+  "windows": [
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790816400000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 60,
+              "start_minute": 0,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790805600000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 60,
+              "start_minute": 0,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790805600000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 60,
+              "start_minute": 0,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790805600000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 60,
+              "start_minute": 0,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790805600000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 60,
+              "start_minute": 0,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790805600000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 60,
+              "start_minute": 0,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790805600000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790805600000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790820000000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 120,
+              "start_minute": 60,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790809200000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 120,
+              "start_minute": 60,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790809200000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 120,
+              "start_minute": 60,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790809200000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 120,
+              "start_minute": 60,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790809200000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 120,
+              "start_minute": 60,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790809200000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 120,
+              "start_minute": 60,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790809200000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790809200000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790823600000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 180,
+              "start_minute": 120,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790812800000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 180,
+              "start_minute": 120,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790812800000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 180,
+              "start_minute": 120,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790812800000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 180,
+              "start_minute": 120,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790812800000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 180,
+              "start_minute": 120,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790812800000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 180,
+              "start_minute": 120,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790812800000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790812800000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790827200000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 240,
+              "start_minute": 180,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790816400000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 240,
+              "start_minute": 180,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790816400000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 240,
+              "start_minute": 180,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790816400000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 240,
+              "start_minute": 180,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790816400000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 240,
+              "start_minute": 180,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790816400000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 240,
+              "start_minute": 180,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790816400000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790816400000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790830800000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 300,
+              "start_minute": 240,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790820000000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 300,
+              "start_minute": 240,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790820000000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 300,
+              "start_minute": 240,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790820000000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 300,
+              "start_minute": 240,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790820000000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 300,
+              "start_minute": 240,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790820000000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 300,
+              "start_minute": 240,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790820000000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790820000000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790834400000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 360,
+              "start_minute": 300,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790823600000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 360,
+              "start_minute": 300,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790823600000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 360,
+              "start_minute": 300,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790823600000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 360,
+              "start_minute": 300,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790823600000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 360,
+              "start_minute": 300,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790823600000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 360,
+              "start_minute": 300,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790823600000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790823600000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790838000000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 420,
+              "start_minute": 360,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790827200000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 420,
+              "start_minute": 360,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790827200000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 420,
+              "start_minute": 360,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790827200000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 420,
+              "start_minute": 360,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790827200000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 420,
+              "start_minute": 360,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790827200000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 420,
+              "start_minute": 360,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790827200000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790827200000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790841600000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 480,
+              "start_minute": 420,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790830800000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 480,
+              "start_minute": 420,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790830800000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 480,
+              "start_minute": 420,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790830800000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 480,
+              "start_minute": 420,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790830800000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 480,
+              "start_minute": 420,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790830800000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 480,
+              "start_minute": 420,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790830800000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790830800000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790877600000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1140,
+              "start_minute": 1080,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790870400000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1140,
+              "start_minute": 1080,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790870400000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1140,
+              "start_minute": 1080,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790870400000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1140,
+              "start_minute": 1080,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790870400000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1140,
+              "start_minute": 1080,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790870400000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1140,
+              "start_minute": 1080,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790870400000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790866800000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790881200000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1140,
+              "start_minute": 1080,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790870400000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1140,
+              "start_minute": 1080,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790870400000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1140,
+              "start_minute": 1080,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790870400000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1140,
+              "start_minute": 1080,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790870400000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1140,
+              "start_minute": 1080,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790870400000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1140,
+              "start_minute": 1080,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790870400000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790870400000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790884800000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1200,
+              "start_minute": 1140,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790874000000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1200,
+              "start_minute": 1140,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790874000000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1200,
+              "start_minute": 1140,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790874000000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1200,
+              "start_minute": 1140,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790874000000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1200,
+              "start_minute": 1140,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790874000000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1200,
+              "start_minute": 1140,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790874000000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790874000000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790888400000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1260,
+              "start_minute": 1200,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790877600000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1260,
+              "start_minute": 1200,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790877600000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1260,
+              "start_minute": 1200,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790877600000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1260,
+              "start_minute": 1200,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790877600000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1260,
+              "start_minute": 1200,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790877600000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1260,
+              "start_minute": 1200,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790877600000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790877600000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": 0.0,
+      "blockers": [
+        {
+          "constraint": "time of day",
+          "members": 6,
+          "stage": "flight"
+        }
+      ],
+      "coverage": 1.0,
+      "end_ms": 1790892000000,
+      "feasible": 0,
+      "infeasible": 6,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1320,
+              "start_minute": 1260,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790881200000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1320,
+              "start_minute": 1260,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790881200000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1320,
+              "start_minute": 1260,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790881200000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1320,
+              "start_minute": 1260,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790881200000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1320,
+              "start_minute": 1260,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790881200000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "infeasible"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "clock": {
+              "end_minute": 1320,
+              "start_minute": 1260,
+              "utc_offset_minutes": 120,
+              "weekday": "thu"
+            },
+            "constraint": "time of day",
+            "expectation": {
+              "days": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri"
+              ],
+              "from_minute": 480,
+              "to_minute": 1080,
+              "type": "clock_window"
+            },
+            "metric": "local_time",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790881200000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "infeasible"
+        }
+      ],
+      "start_ms": 1790881200000,
+      "suitability": null,
+      "unknown": 0
+    },
+    {
+      "agreement": null,
+      "blockers": [],
+      "coverage": 0.0,
+      "end_ms": 1790845200000,
+      "feasible": 0,
+      "infeasible": 0,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [
+        {
+          "members": 6,
+          "metric": "precipitation_probability"
+        }
+      ],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790834400000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790834400000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790834400000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790834400000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790834400000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790834400000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "unknown"
+        }
+      ],
+      "start_ms": 1790834400000,
+      "suitability": null,
+      "unknown": 6
+    },
+    {
+      "agreement": null,
+      "blockers": [],
+      "coverage": 0.0,
+      "end_ms": 1790848800000,
+      "feasible": 0,
+      "infeasible": 0,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [
+        {
+          "members": 6,
+          "metric": "precipitation_probability"
+        }
+      ],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790838000000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790838000000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790838000000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790838000000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790838000000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790838000000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "unknown"
+        }
+      ],
+      "start_ms": 1790838000000,
+      "suitability": null,
+      "unknown": 6
+    },
+    {
+      "agreement": null,
+      "blockers": [],
+      "coverage": 0.0,
+      "end_ms": 1790852400000,
+      "feasible": 0,
+      "infeasible": 0,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [
+        {
+          "members": 6,
+          "metric": "precipitation_probability"
+        }
+      ],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790841600000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790841600000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790841600000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790841600000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790841600000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790841600000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "unknown"
+        }
+      ],
+      "start_ms": 1790841600000,
+      "suitability": null,
+      "unknown": 6
+    },
+    {
+      "agreement": null,
+      "blockers": [],
+      "coverage": 0.0,
+      "end_ms": 1790856000000,
+      "feasible": 0,
+      "infeasible": 0,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [
+        {
+          "members": 6,
+          "metric": "precipitation_probability"
+        }
+      ],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790845200000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790845200000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790845200000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790845200000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790845200000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790845200000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "unknown"
+        }
+      ],
+      "start_ms": 1790845200000,
+      "suitability": null,
+      "unknown": 6
+    },
+    {
+      "agreement": null,
+      "blockers": [],
+      "coverage": 0.0,
+      "end_ms": 1790859600000,
+      "feasible": 0,
+      "infeasible": 0,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [
+        {
+          "members": 6,
+          "metric": "precipitation_probability"
+        }
+      ],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790848800000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790848800000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790848800000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790848800000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790848800000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790848800000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "unknown"
+        }
+      ],
+      "start_ms": 1790848800000,
+      "suitability": null,
+      "unknown": 6
+    },
+    {
+      "agreement": null,
+      "blockers": [],
+      "coverage": 0.0,
+      "end_ms": 1790863200000,
+      "feasible": 0,
+      "infeasible": 0,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [
+        {
+          "members": 6,
+          "metric": "precipitation_probability"
+        }
+      ],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790852400000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790852400000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790852400000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790852400000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790852400000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790852400000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "unknown"
+        }
+      ],
+      "start_ms": 1790852400000,
+      "suitability": null,
+      "unknown": 6
+    },
+    {
+      "agreement": null,
+      "blockers": [],
+      "coverage": 0.0,
+      "end_ms": 1790866800000,
+      "feasible": 0,
+      "infeasible": 0,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [
+        {
+          "members": 6,
+          "metric": "precipitation_probability"
+        }
+      ],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790856000000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790856000000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790856000000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790856000000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790856000000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790856000000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "unknown"
+        }
+      ],
+      "start_ms": 1790856000000,
+      "suitability": null,
+      "unknown": 6
+    },
+    {
+      "agreement": null,
+      "blockers": [],
+      "coverage": 0.0,
+      "end_ms": 1790870400000,
+      "feasible": 0,
+      "infeasible": 0,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [
+        {
+          "members": 6,
+          "metric": "precipitation_probability"
+        }
+      ],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790859600000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790859600000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790859600000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790859600000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790859600000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790859600000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "unknown"
+        }
+      ],
+      "start_ms": 1790859600000,
+      "suitability": null,
+      "unknown": 6
+    },
+    {
+      "agreement": null,
+      "blockers": [],
+      "coverage": 0.0,
+      "end_ms": 1790874000000,
+      "feasible": 0,
+      "infeasible": 0,
+      "meets_requirement": false,
+      "members_total": 6,
+      "missing": [
+        {
+          "members": 6,
+          "metric": "precipitation_probability"
+        }
+      ],
+      "outcomes": [
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790863200000
+          },
+          "member": "control",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790863200000
+          },
+          "member": "member01",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790863200000
+          },
+          "member": "member02",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790863200000
+          },
+          "member": "member03",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790863200000
+          },
+          "member": "member04",
+          "suitability": null,
+          "verdict": "unknown"
+        },
+        {
+          "failure": {
+            "actual": null,
+            "constraint": "low rain chance",
+            "expectation": {
+              "comparison": "<",
+              "threshold": 20.0,
+              "type": "comparison"
+            },
+            "metric": "precipitation_probability",
+            "passed": false,
+            "penalty": null,
+            "stage": "flight",
+            "timestamp_ms": 1790863200000
+          },
+          "member": "member05",
+          "suitability": null,
+          "verdict": "unknown"
+        }
+      ],
+      "start_ms": 1790863200000,
+      "suitability": null,
+      "unknown": 6
+    }
+  ]
+}

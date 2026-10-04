@@ -1,0 +1,293 @@
+{
+  "feasible": [
+    {
+      "end_ms": 1789992000000,
+      "evidence": [
+        {
+          "actual": null,
+          "clock": {
+            "end_minute": 660,
+            "start_minute": 540,
+            "utc_offset_minutes": 0,
+            "weekday": "mon"
+          },
+          "constraint": "time of day",
+          "expectation": {
+            "days": [
+              "mon",
+              "tue",
+              "wed",
+              "thu",
+              "fri"
+            ],
+            "from_minute": 480,
+            "to_minute": 1080,
+            "type": "clock_window"
+          },
+          "metric": "local_time",
+          "passed": true,
+          "penalty": null,
+          "stage": "flight",
+          "timestamp_ms": 1789981200000
+        },
+        {
+          "actual": 4.166666666666667,
+          "constraint": "safe wind",
+          "expectation": {
+            "comparison": "<=",
+            "threshold": 5.555555555555555,
+            "type": "comparison"
+          },
+          "metric": "wind_speed",
+          "passed": true,
+          "penalty": null,
+          "stage": "flight",
+          "timestamp_ms": 1789981200000
+        },
+        {
+          "actual": 15.0,
+          "constraint": "low rain chance",
+          "expectation": {
+            "comparison": "<",
+            "threshold": 20.0,
+            "type": "comparison"
+          },
+          "metric": "precipitation_probability",
+          "passed": true,
+          "penalty": null,
+          "stage": "flight",
+          "timestamp_ms": 1789981200000
+        },
+        {
+          "actual": 4.166666666666667,
+          "constraint": "calm air",
+          "expectation": {
+            "preference": {
+              "ideal": 1.3888888888888888,
+              "kind": "minimize",
+              "scale": 5.555555555555555
+            },
+            "type": "preference"
+          },
+          "metric": "wind_speed",
+          "passed": true,
+          "penalty": 0.5000000000000001,
+          "stage": "flight",
+          "timestamp_ms": 1789981200000
+        },
+        {
+          "actual": 20.0,
+          "constraint": "rain chance",
+          "expectation": {
+            "comparison": "<",
+            "threshold": 50.0,
+            "type": "comparison"
+          },
+          "metric": "precipitation_probability",
+          "passed": true,
+          "penalty": null,
+          "stage": "recovery",
+          "timestamp_ms": 1789988400000
+        },
+        {
+          "actual": 21.0,
+          "constraint": "mild temperature",
+          "expectation": {
+            "preference": {
+              "kind": "range",
+              "max": 25.0,
+              "min": 15.0,
+              "scale": 10.0
+            },
+            "type": "preference"
+          },
+          "metric": "temperature",
+          "passed": true,
+          "penalty": 0.0,
+          "stage": "recovery",
+          "timestamp_ms": 1789988400000
+        }
+      ],
+      "stages": [
+        {
+          "end_ms": 1789988400000,
+          "name": "flight",
+          "start_ms": 1789981200000,
+          "suitability": 0.6749999999999999
+        },
+        {
+          "end_ms": 1789992000000,
+          "name": "recovery",
+          "start_ms": 1789988400000,
+          "suitability": 1.0
+        }
+      ],
+      "start_ms": 1789981200000,
+      "suitability": 0.74
+    },
+    {
+      "end_ms": 1789988400000,
+      "evidence": [
+        {
+          "actual": null,
+          "clock": {
+            "end_minute": 600,
+            "start_minute": 480,
+            "utc_offset_minutes": 0,
+            "weekday": "mon"
+          },
+          "constraint": "time of day",
+          "expectation": {
+            "days": [
+              "mon",
+              "tue",
+              "wed",
+              "thu",
+              "fri"
+            ],
+            "from_minute": 480,
+            "to_minute": 1080,
+            "type": "clock_window"
+          },
+          "metric": "local_time",
+          "passed": true,
+          "penalty": null,
+          "stage": "flight",
+          "timestamp_ms": 1789977600000
+        },
+        {
+          "actual": 4.166666666666667,
+          "constraint": "safe wind",
+          "expectation": {
+            "comparison": "<=",
+            "threshold": 5.555555555555555,
+            "type": "comparison"
+          },
+          "metric": "wind_speed",
+          "passed": true,
+          "penalty": null,
+          "stage": "flight",
+          "timestamp_ms": 1789981200000
+        },
+        {
+          "actual": 15.0,
+          "constraint": "low rain chance",
+          "expectation": {
+            "comparison": "<",
+            "threshold": 20.0,
+            "type": "comparison"
+          },
+          "metric": "precipitation_probability",
+          "passed": true,
+          "penalty": null,
+          "stage": "flight",
+          "timestamp_ms": 1789981200000
+        },
+        {
+          "actual": 4.166666666666667,
+          "constraint": "calm air",
+          "expectation": {
+            "preference": {
+              "ideal": 1.3888888888888888,
+              "kind": "minimize",
+              "scale": 5.555555555555555
+            },
+            "type": "preference"
+          },
+          "metric": "wind_speed",
+          "passed": true,
+          "penalty": 0.5000000000000001,
+          "stage": "flight",
+          "timestamp_ms": 1789981200000
+        },
+        {
+          "actual": 10.0,
+          "constraint": "rain chance",
+          "expectation": {
+            "comparison": "<",
+            "threshold": 50.0,
+            "type": "comparison"
+          },
+          "metric": "precipitation_probability",
+          "passed": true,
+          "penalty": null,
+          "stage": "recovery",
+          "timestamp_ms": 1789984800000
+        },
+        {
+          "actual": 22.0,
+          "constraint": "mild temperature",
+          "expectation": {
+            "preference": {
+              "kind": "range",
+              "max": 25.0,
+              "min": 15.0,
+              "scale": 10.0
+            },
+            "type": "preference"
+          },
+          "metric": "temperature",
+          "passed": true,
+          "penalty": 0.0,
+          "stage": "recovery",
+          "timestamp_ms": 1789984800000
+        }
+      ],
+      "stages": [
+        {
+          "end_ms": 1789984800000,
+          "name": "flight",
+          "start_ms": 1789977600000,
+          "suitability": 0.575
+        },
+        {
+          "end_ms": 1789988400000,
+          "name": "recovery",
+          "start_ms": 1789984800000,
+          "suitability": 1.0
+        }
+      ],
+      "start_ms": 1789977600000,
+      "suitability": 0.6599999999999999
+    }
+  ],
+  "rejected": [
+    {
+      "end_ms": 1789995600000,
+      "failure": {
+        "actual": 7.222222222222222,
+        "constraint": "safe wind",
+        "expectation": {
+          "comparison": "<=",
+          "threshold": 5.555555555555555,
+          "type": "comparison"
+        },
+        "metric": "wind_speed",
+        "passed": false,
+        "penalty": null,
+        "stage": "flight",
+        "timestamp_ms": 1789988400000
+      },
+      "start_ms": 1789984800000
+    },
+    {
+      "end_ms": 1789999200000,
+      "failure": {
+        "actual": 7.222222222222222,
+        "constraint": "safe wind",
+        "expectation": {
+          "comparison": "<=",
+          "threshold": 5.555555555555555,
+          "type": "comparison"
+        },
+        "metric": "wind_speed",
+        "passed": false,
+        "penalty": null,
+        "stage": "flight",
+        "timestamp_ms": 1789988400000
+      },
+      "start_ms": 1789988400000
+    }
+  ],
+  "schema_version": 1
+}

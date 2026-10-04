@@ -23,6 +23,7 @@ const DAY_MS: i64 = DAY_MINUTES as i64 * MINUTE_MS;
 
 /// Why a [`Schedule`] could not be built.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ScheduleError {
     /// Not a `HH:MM` clock time (`24:00` is allowed only as an end time).
     BadClock(String),

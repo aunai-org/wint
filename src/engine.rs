@@ -6,6 +6,7 @@ use crate::{Comparison, Constraint, Plan, Preference, Schedule, Series, Validati
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize))]
 #[cfg_attr(feature = "json", serde(tag = "type", rename_all = "snake_case"))]
+#[non_exhaustive]
 pub enum Expectation {
     /// A hard limit: the reading must satisfy `reading <comparison> threshold`.
     Comparison {
@@ -83,11 +84,27 @@ pub struct RejectedWindow {
     pub end_ms: i64,
     pub failure: Evidence,
 }
-#[derive(Clone, Debug, Default, PartialEq)]
+/// Version of the JSON shape of results (`SearchResult`, `EnsembleResult`). It changes only when an
+/// existing field is removed, renamed or reinterpreted; adding fields or enum variants does not
+/// change it, so readers must ignore what they do not know. See SPEC.md, "Stability".
+pub const SCHEMA_VERSION: u32 = 1;
+
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize))]
 pub struct SearchResult {
+    /// [`SCHEMA_VERSION`] at the time the result was produced.
+    pub schema_version: u32,
     pub feasible: Vec<WindowResult>,
     pub rejected: Vec<RejectedWindow>,
+}
+impl Default for SearchResult {
+    fn default() -> Self {
+        Self {
+            schema_version: SCHEMA_VERSION,
+            feasible: Vec::new(),
+            rejected: Vec::new(),
+        }
+    }
 }
 pub struct WindowSearch<'a> {
     series: &'a Series,

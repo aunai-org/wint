@@ -33,6 +33,7 @@ impl Metric {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub enum Comparison {
     #[cfg_attr(feature = "json", serde(rename = "<"))]
     LessThan,
@@ -60,6 +61,7 @@ impl Comparison {
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "json", serde(tag = "kind", rename_all = "snake_case"))]
+#[non_exhaustive]
 pub enum Preference {
     /// Lower is better; values at or below `ideal` are perfect. A value
     /// `scale` or more above `ideal` receives the maximum penalty.
@@ -76,6 +78,7 @@ pub enum Preference {
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "json", serde(tag = "type", rename_all = "snake_case"))]
 #[cfg_attr(feature = "json", serde(try_from = "ConstraintData"))]
+#[non_exhaustive]
 pub enum Constraint {
     Hard {
         name: String,
@@ -416,6 +419,7 @@ impl TryFrom<SeriesData> for Series {
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ValidationError {
     NonPositiveCadence,
     EmptySeries,

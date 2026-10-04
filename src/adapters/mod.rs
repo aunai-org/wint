@@ -12,6 +12,7 @@ use std::fmt;
 
 /// Why an adapter could not produce a series.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum AdapterError {
     /// The input is malformed. `location` says where (a line number, a field name).
     Format { location: String, message: String },

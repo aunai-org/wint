@@ -8,6 +8,7 @@ use std::fmt;
 
 /// A physical dimension. Units only convert within one dimension.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum Dimension {
     Speed,
     Temperature,
@@ -22,6 +23,7 @@ pub enum Dimension {
 
 /// A supported measurement unit.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum Unit {
     MetersPerSecond,
     KilometersPerHour,
@@ -274,6 +276,7 @@ impl fmt::Display for Unit {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum UnitError {
     DimensionMismatch { from: Unit, to: Unit },
 }

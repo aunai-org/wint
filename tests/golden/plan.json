@@ -1,0 +1,72 @@
+{
+  "name": "drone-survey",
+  "stages": [
+    {
+      "constraints": [
+        {
+          "comparison": "<=",
+          "metric": "wind_speed",
+          "name": "safe wind",
+          "threshold": 5.555555555555555,
+          "type": "hard"
+        },
+        {
+          "comparison": "<",
+          "metric": "precipitation_probability",
+          "name": "low rain chance",
+          "threshold": 20.0,
+          "type": "hard"
+        },
+        {
+          "metric": "wind_speed",
+          "name": "calm air",
+          "preference": {
+            "ideal": 1.3888888888888888,
+            "kind": "minimize",
+            "scale": 5.555555555555555
+          },
+          "type": "soft",
+          "weight": 2.0
+        }
+      ],
+      "duration_ms": 7200000,
+      "name": "flight",
+      "schedule": {
+        "days": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri"
+        ],
+        "from": "08:00",
+        "to": "18:00"
+      }
+    },
+    {
+      "constraints": [
+        {
+          "comparison": "<",
+          "metric": "precipitation_probability",
+          "name": "rain chance",
+          "threshold": 50.0,
+          "type": "hard"
+        },
+        {
+          "metric": "temperature",
+          "name": "mild temperature",
+          "preference": {
+            "kind": "range",
+            "max": 25.0,
+            "min": 15.0,
+            "scale": 10.0
+          },
+          "type": "soft",
+          "weight": 1.0
+        }
+      ],
+      "duration_ms": 3600000,
+      "name": "recovery"
+    }
+  ]
+}

@@ -14,7 +14,7 @@ pub mod wasm;
 
 pub use engine::{
     ClockSpan, Evidence, Expectation, RejectedWindow, SearchResult, StageResult, WindowResult,
-    WindowSearch,
+    WindowSearch, SCHEMA_VERSION,
 };
 pub use ensemble::{
     Blocker, Ensemble, EnsembleResult, EnsembleSearch, EnsembleWindow, Member, MemberOutcome,

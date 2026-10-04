@@ -59,6 +59,6 @@ Uncertainty first, then the smaller items.
 **M4.4 Remaining**
 - [x] Layering: results are data. Evidence carries a structured `expectation` and `clock` span instead of pre-formatted text; wording and display helpers moved to the opt-in `present` module; tests enforce it (`tests/layering.rs`)
 - [ ] Temporal predicates and gaps between stages
-- [ ] Stable schemas and API (freeze JSON formats and the Rust/JS interfaces)
+- [x] Stable schemas: `schema_version` on results, `#[non_exhaustive]` public enums, golden-file tests, SPEC "Stability" rules (a 1.0 freeze of the Rust builder API remains for later)
 - [x] Weekday rules (`days` on a schedule, `--on`; the day a window starts on)
 - [ ] Daylight-saving-aware offsets

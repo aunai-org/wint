@@ -14,6 +14,7 @@ const csv = readFileSync('examples/series.csv', 'utf8');
 const openMeteo = readFileSync('tests/fixtures/open_meteo_hourly.json', 'utf8');
 
 assert.match(wint.version(), /^\d+\.\d+\.\d+/);
+assert.equal(wint.schemaVersion(), 1);
 
 // Same expectations as the Rust integration tests.
 const r = JSON.parse(wint.search(series, plan));
