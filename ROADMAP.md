@@ -8,7 +8,7 @@ Guiding principle: get a trustworthy, explained answer from real data in minutes
 - [x] Plan longer than series returns an empty result (previously a slice panic)
 - [x] Integration tests, CI (fmt, clippy, test), README example corrected
 - [x] Decided: use data as given. No cadence-boundary alignment and no resampling (see SPEC)
-- [ ] Replace placeholder `repository` URL in Cargo.toml
+- [x] Replace placeholder `repository` URL in Cargo.toml
 
 ## M1 - Usable from anywhere
 - [x] Optional serde JSON (`json` feature) for series, plans and results; JSON series are validated
@@ -63,3 +63,29 @@ Uncertainty first, then the smaller items.
 - [x] Stable schemas: `schema_version` on results, `#[non_exhaustive]` public enums, golden-file tests, SPEC "Stability" rules (a 1.0 freeze of the Rust builder API remains for later)
 - [x] Weekday rules (`days` on a schedule, `--on`; the day a window starts on)
 - [x] Daylight-saving-aware offsets: optional per-sample `utc_offset_minutes` (JSON, CSV column); the core has no timezone database. Open-Meteo gives one offset per response, so a DST-crossing forecast still needs the offsets from elsewhere (e.g. pairing a local-time request) - open
+
+## Backlog
+
+Small, well-defined next steps. A daily routine takes the first unchecked `agent-ok` item, does it on a branch and opens a **draft** pull request for review; it never merges, tags or publishes. Items marked `needs-you` need a decision, an account or a real-world check, and are never picked up automatically. Order matters: the first unchecked `agent-ok` item goes first. Repository is in brackets.
+
+**agent-ok**
+- [ ] [wint] README: crates.io, docs.rs and npm version badges now that 0.1.0 is published
+- [ ] [wint] CLI text output shows the wait between stages (for example `wait 8 h`), as the demo does
+- [ ] [wint] `CHANGELOG.md` with a 0.1.0 entry, and a step for it in `docs/RELEASING.md`
+- [ ] [wint] Property tests (`proptest`): a feasible window always satisfies every hard constraint, and every rejected window names a real failure
+- [ ] [wint-demo] A chart panel for `==` limits (flags such as `oven_free`), so every hard rule on the page has a picture
+- [ ] [wint] Rustdoc examples (doc tests) on the main public types, so docs.rs shows runnable code
+- [ ] [wint] Two more examples from other fields (for example greenhouse watering, pool heating) in `docs/EXAMPLES.md`, each with a test that pins its numbers
+- [ ] [wint-demo] Accessibility pass: keyboard use, labels and contrast, with end-to-end checks
+- [ ] [wint] Formal JSON Schema files for plan and result, checked against the golden files by a test
+- [ ] [wint] Open-Meteo local offsets per sample, so a forecast that crosses a clock change keeps the right local time. Start with a short design note in the pull request if the change is large
+
+**needs-you**
+- [ ] Preset thresholds reviewed by someone who knows the field
+- [ ] Live-browser check of the demo against the real Open-Meteo API
+- [ ] Rename the `time of day` rule label to a language-neutral identifier (changes the result schema)
+- [ ] The ensemble API lacks visibility and rain probability: second source, or ensemble-friendly presets
+- [ ] Freeze the Rust API toward 1.0
+- [ ] Enable Dependabot for Actions, Cargo and npm
+- [ ] A documentation site (for example mdBook) once the docs outgrow the repository
+- [ ] Rename `LEARNING_GUIDE.md` to `CONCEPTS.md`
