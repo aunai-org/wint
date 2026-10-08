@@ -1,0 +1,98 @@
+name: Release
+# Publishes wint when you push a version tag (for example v0.1.1):
+#   1. checks the tag, the version in Cargo.toml and that the commit is on master;
+#   2. runs the full checks and dry-runs both packages;
+#   3. waits for your approval (the "release" environment), then publishes the crate to
+#      crates.io and the WebAssembly package to npm, and creates the GitHub Release.
+#
+# One-time setup (see docs/RELEASING.md): create a GitHub environment named "release" with
+# yourself as a required reviewer, and add two secrets to it: CARGO_REGISTRY_TOKEN
+# (crates.io) and NPM_TOKEN (npm).
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag matches Cargo.toml and the commit is on master
+        run: |
+          version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match version $version in Cargo.toml" >&2
+            exit 1
+          fi
+          if ! git branch -r --contains "$GITHUB_SHA" | grep -q 'origin/master$'; then
+            echo "Commit $GITHUB_SHA is not on master; merge it before tagging" >&2
+            exit 1
+          fi
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+      - run: cargo test
+      - run: cargo test --all-features
+      - uses: actions/cache@v4
+        id: wbg
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-cli-0.2.129
+      - if: steps.wbg.outputs.cache-hit != 'true'
+        run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - run: scripts/build-wasm.sh
+      - run: node scripts/wasm-smoke.mjs
+      - name: Dry runs (nothing is uploaded)
+        run: |
+          cargo publish --dry-run
+          cd pkg && npm pack --dry-run
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    # Protected environment: the job pauses here until a reviewer approves it, and only then
+    # gets the registry tokens. Publishing cannot be undone.
+    environment: release
+    permissions:
+      contents: write   # create the GitHub Release
+      id-token: write   # npm provenance (links the package to this workflow run)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: actions/cache@v4
+        id: wbg
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-cli-0.2.129
+      - if: steps.wbg.outputs.cache-hit != 'true'
+        run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Publish the crate
+        run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Build and publish the npm package
+        run: |
+          scripts/build-wasm.sh
+          cd pkg
+          npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Create the GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag --title "wint ${GITHUB_REF_NAME#v}"
+        env:
+          GH_TOKEN: ${{ github.token }}
