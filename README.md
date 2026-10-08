@@ -13,7 +13,7 @@ It deliberately starts below data ingestion and user interfaces: callers supply 
 Weather is the first use case, but the engine itself is not about weather. It takes a table of timestamps and named numbers and a plan of limits on those names, and tells you when the job can run and why not otherwise. A CPU load, an electricity price or an oven flag work exactly like a wind speed. Only the Open-Meteo adapter and the preset plans are weather-specific, and both are optional. See [docs/EXAMPLES.md](docs/EXAMPLES.md) for worked examples: weather, a server deploy window, EV charging and a bakery batch with a proofing wait.
 
 See [the specification](SPEC.md) for the product and implementation plan.
-New to the field? Start with the [plain-language learning guide](LEARNING_GUIDE.md).
+For the conventions, terminology and concepts used here, see the [concepts guide](LEARNING_GUIDE.md).
 
 ## Command line
 
