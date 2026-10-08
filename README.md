@@ -1,6 +1,9 @@
 # wint
 
 [![CI](https://github.com/aunai-org/wint/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/aunai-org/wint/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/wint.svg)](https://crates.io/crates/wint)
+[![docs.rs](https://img.shields.io/docsrs/wint)](https://docs.rs/wint)
+[![npm](https://img.shields.io/npm/v/wint-core.svg)](https://www.npmjs.com/package/wint-core)
 
 `wint` finds the time windows when a job can run, given the limits you set, and explains why the others cannot. It is a deterministic Rust engine: you give it readings over time (a forecast, server metrics, energy prices) and a plan of limits, and it returns ranked windows with the evidence behind every decision. Weather forecasts are the first and best-supported use case; the engine itself works with any regular table of timestamps and numbers.
 
