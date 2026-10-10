@@ -29,6 +29,16 @@ pub fn format_offset(minutes: i32) -> String {
 }
 
 /// Unix milliseconds as `YYYY-MM-DDTHH:MMZ` (UTC).
+/// A wait as short text: `8 h`, `90 min`, `1 h 30 min` (rounded to whole minutes).
+pub fn format_wait(ms: i64) -> String {
+    let minutes = (ms + 30_000).div_euclid(60_000);
+    match (minutes / 60, minutes % 60) {
+        (0, m) => format!("{m} min"),
+        (h, 0) => format!("{h} h"),
+        (h, m) => format!("{h} h {m} min"),
+    }
+}
+
 pub fn format_utc(ms: i64) -> String {
     let minutes = ms.div_euclid(60_000);
     let (days, minute_of_day) = (minutes.div_euclid(1440), minutes.rem_euclid(1440));
@@ -216,6 +226,13 @@ mod tests {
         assert_eq!(format_value("wind_speed", Some(10.2889)), "10.29 m/s");
         assert_eq!(format_value("custom", Some(3.5)), "3.5");
         assert_eq!(format_value("wind_speed", None), "missing");
+    }
+
+    #[test]
+    fn waits() {
+        assert_eq!(format_wait(8 * 3_600_000), "8 h");
+        assert_eq!(format_wait(90 * 60_000), "1 h 30 min");
+        assert_eq!(format_wait(45 * 60_000), "45 min");
     }
 
     #[test]

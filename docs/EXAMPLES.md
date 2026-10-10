@@ -35,7 +35,7 @@ cargo run --features json -- --plan examples/paint-plan.json --series examples/p
 ```text
 #1 2026-10-10T08:00Z -> 2026-10-10T19:00Z  suitability 1.00
    paint        2026-10-10T08:00Z -> 2026-10-10T10:00Z  suitability 1.00
-   clear coat   2026-10-10T18:00Z -> 2026-10-10T19:00Z  suitability 1.00
+   clear coat   2026-10-10T18:00Z -> 2026-10-10T19:00Z  suitability 1.00  wait 8 h
 ```
 
 Painting at 08:00 works because the clear coat can wait until 18:00, when the rain stops. The [tutorial](TUTORIAL.md#6-jobs-with-a-wait-in-the-middle-gaps) walks through it step by step.
@@ -90,7 +90,7 @@ cargo run --features json -- --plan examples/domains/bakery-batch/plan.json --se
 ```text
 #1 2026-10-05T10:00Z -> 2026-10-05T14:00Z  suitability 1.00
    mix          2026-10-05T10:00Z -> 2026-10-05T11:00Z  suitability 1.00
-   bake         2026-10-05T13:00Z -> 2026-10-05T14:00Z  suitability 1.00
+   bake         2026-10-05T13:00Z -> 2026-10-05T14:00Z  suitability 1.00  wait 2 h
 ```
 
 Only 6 start times work. Mixing at 05:00 is rejected for a reason that is easy to miss: the room is fine, but the oven is busy at every allowed bake time (08:00 to 10:00), so no bake slot exists. That is the kind of explanation the engine is for.

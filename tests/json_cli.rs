@@ -381,3 +381,26 @@ fn cli_reads_native_ensemble_json_and_validates_flags() {
     assert!(String::from_utf8_lossy(&bad.stderr).contains("no members"));
     std::fs::remove_dir_all(&dir).ok();
 }
+
+#[test]
+fn cli_text_output_shows_the_wait_between_stages() {
+    let out = Command::new(env!("CARGO_BIN_EXE_wint"))
+        .args([
+            "--plan",
+            "examples/paint-plan.json",
+            "--series",
+            "examples/paint-series.csv",
+            "--format",
+            "csv",
+            "--top",
+            "1",
+        ])
+        .output()
+        .unwrap();
+    assert!(out.status.success());
+    let text = String::from_utf8(out.stdout).unwrap();
+    let clear = text.lines().find(|l| l.contains("clear coat")).unwrap();
+    assert!(clear.ends_with("suitability 1.00  wait 8 h"), "{text}");
+    let paint = text.lines().find(|l| l.contains("paint  ")).unwrap();
+    assert!(!paint.contains("wait"), "{text}");
+}
