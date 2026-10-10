@@ -69,7 +69,7 @@ Uncertainty first, then the smaller items.
 Small, well-defined next steps. A daily routine takes the first unchecked `agent-ok` item, does it on a branch and opens a **draft** pull request for review; it never merges, tags or publishes. Items marked `needs-you` need a decision, an account or a real-world check, and are never picked up automatically. Order matters: the first unchecked `agent-ok` item goes first. Repository is in brackets.
 
 **agent-ok**
-- [ ] [wint] README: crates.io, docs.rs and npm version badges now that 0.1.0 is published
+- [x] [wint] README: crates.io, docs.rs and npm version badges now that 0.1.0 is published
 - [ ] [wint] CLI text output shows the wait between stages (for example `wait 8 h`), as the demo does
 - [ ] [wint] `CHANGELOG.md` with a 0.1.0 entry, and a step for it in `docs/RELEASING.md`
 - [ ] [wint] Property tests (`proptest`): a feasible window always satisfies every hard constraint, and every rejected window names a real failure
