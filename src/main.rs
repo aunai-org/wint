@@ -2,7 +2,7 @@
 
 use std::process::ExitCode;
 use wint::adapters::{csv, AdapterError};
-use wint::present::{describe_expectation, describe_reading, format_utc};
+use wint::present::{describe_expectation, describe_reading, format_utc, format_wait};
 use wint::{
     presets, Ensemble, EnsembleResult, EnsembleSearch, Plan, Schedule, SearchResult, Series,
     WindowSearch,
@@ -471,12 +471,18 @@ fn print_text(plan: &Plan, series: &Series, result: &SearchResult, args: &Args) 
         );
         if window.stages.len() > 1 {
             for stage in &window.stages {
+                let wait = if stage.gap_ms > 0 {
+                    format!("  wait {}", format_wait(stage.gap_ms))
+                } else {
+                    String::new()
+                };
                 println!(
-                    "   {:<12} {} -> {}  suitability {:.2}",
+                    "   {:<12} {} -> {}  suitability {:.2}{}",
                     stage.name,
                     format_utc(stage.start_ms),
                     format_utc(stage.end_ms),
-                    stage.suitability
+                    stage.suitability,
+                    wait
                 );
             }
         }

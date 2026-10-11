@@ -93,7 +93,7 @@ cargo run --features json -- --plan examples/paint-plan.json --series examples/p
 ```text
 #1 2026-10-10T08:00Z -> 2026-10-10T19:00Z  suitability 1.00
    paint        2026-10-10T08:00Z -> 2026-10-10T10:00Z  suitability 1.00
-   clear coat   2026-10-10T18:00Z -> 2026-10-10T19:00Z  suitability 1.00
+   clear coat   2026-10-10T18:00Z -> 2026-10-10T19:00Z  suitability 1.00  wait 8 h
 ```
 
 Paint at 08:00, and the clear coat goes on at 18:00. The earliest allowed time for it was 14:00, but it rains until 18:00, so wint tried each later start inside the allowed wait and used the first dry one. The rain in between is never checked. That is also why a range helps: with a fixed "exactly 6 hours" the clear coat would land at 16:00, in the rain, and the whole day would be rejected.
