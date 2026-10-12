@@ -36,7 +36,7 @@ If `publish` fails after the crate went out but before npm did, do not re-run th
 
 1. Start from an up-to-date trunk: `git checkout master && git pull`.
 2. Set the version in `Cargo.toml` (`version = "0.1.0"`), run `cargo build` so `Cargo.lock` follows, and commit.
-3. Update `ROADMAP.md` if the release changes what is done and what is next.
+3. Update `CHANGELOG.md`: rename the `[Unreleased]` heading to the new version and date, add a fresh empty `[Unreleased]` section above it, and update the compare links at the bottom. Update `ROADMAP.md` if the release changes what is done and what is next.
 4. Run the same checks as CI, including the run without features:
 
    ```sh
@@ -76,7 +76,7 @@ git tag -a v0.1.0 -m "wint 0.1.0"
 git push origin v0.1.0
 ```
 
-Then create a GitHub Release from the tag (Releases, Draft a new release) and write the notes by hand: what it does, what changed, known limits. There is no changelog file yet; the release notes are the changelog.
+Then create a GitHub Release from the tag (Releases, Draft a new release) and paste the version's section from `CHANGELOG.md` as the notes, and add known limits if any.
 
 ### 5. Release the demo
 
