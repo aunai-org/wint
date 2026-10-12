@@ -29,6 +29,9 @@ serde_json = { version = "1.0.151", optional = true }
 ureq = { version = "3.4.2", optional = true, default-features = false, features = ["rustls", "platform-verifier", "gzip"] }
 wasm-bindgen = { version = "=0.2.129", optional = true }
 
+[dev-dependencies]
+proptest = { version = "1", default-features = false, features = ["std"] }
+
 [features]
 # JSON (de)serialization of series, plans and results; required by the CLI.
 json = ["dep:serde", "dep:serde_json"]
