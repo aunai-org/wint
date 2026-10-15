@@ -28,6 +28,7 @@ A few things that are specific to this project:
 
 - **Results are data.** The engine returns numbers, tags and names, never display text. Wording, rounding and units belong in the `present` module or in the application. `tests/layering.rs` enforces this, so a `format!` in `src/engine.rs` will fail it.
 - **Result shapes are pinned.** `tests/golden/` holds the exact JSON of a result and a plan. If you add a field on purpose, review the diff and regenerate with `WINT_UPDATE_GOLDEN=1 cargo test --all-features --test golden`. Removing or renaming a field changes `schema_version`; see the Stability section of the [specification](SPEC.md).
+- **Property tests** live in `tests/properties.rs` (`proptest`); a failing case is saved in a `.proptest-regressions` file, which you should commit with the fix.
 - **Add a test with behaviour changes**, and update the specification or docs if the behaviour is described there. Examples in `docs/` and the README are checked by tests where they print numbers, so keep them true.
 - **Missing readings fail hard limits.** That is deliberate. Changes that would let a missing value pass need a very good reason.
 

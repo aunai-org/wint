@@ -72,7 +72,7 @@ Small, well-defined next steps. A daily routine takes the first unchecked `agent
 - [x] [wint] README: crates.io, docs.rs and npm version badges now that 0.1.0 is published
 - [x] [wint] CLI text output shows the wait between stages (for example `wait 8 h`), as the demo does
 - [x] [wint] `CHANGELOG.md` with a 0.1.0 entry, and a step for it in `docs/RELEASING.md`
-- [ ] [wint] Property tests (`proptest`): a feasible window always satisfies every hard constraint, and every rejected window names a real failure
+- [x] [wint] Property tests (`proptest`): a feasible window always satisfies every hard constraint, and every rejected window names a real failure
 - [ ] [wint-demo] A chart panel for `==` limits (flags such as `oven_free`), so every hard rule on the page has a picture
 - [ ] [wint] Rustdoc examples (doc tests) on the main public types, so docs.rs shows runnable code
 - [ ] [wint] Two more examples from other fields (for example greenhouse watering, pool heating) in `docs/EXAMPLES.md`, each with a test that pins its numbers

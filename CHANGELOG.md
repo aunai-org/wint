@@ -8,6 +8,7 @@ All notable changes to wint are recorded here. The format follows [Keep a Change
 - README badges for crates.io, docs.rs and npm.
 - The CLI text output shows the wait between stages (for example `wait 8 h`).
 - This changelog.
+- Property tests (`proptest`, a dev-dependency only): feasible windows satisfy every hard constraint and rejections name a real failure.
 
 ## [0.1.0] - 2026-10-06
 
