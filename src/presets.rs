@@ -9,6 +9,15 @@
 use crate::{Comparison, Constraint, Metric, Plan, Preference};
 
 /// A named, documented plan template.
+///
+/// ```
+/// use wint::presets::by_name;
+///
+/// let drone = by_name("drone").unwrap();
+/// let plan = drone.plan(2 * 3_600_000); // a two-hour flight
+/// assert_eq!(plan.duration_ms(), 2 * 3_600_000);
+/// assert!(by_name("no-such-preset").is_none());
+/// ```
 #[derive(Clone, Copy, Debug)]
 pub struct Preset {
     pub name: &'static str,

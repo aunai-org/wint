@@ -194,6 +194,37 @@ pub struct EnsembleResult {
 }
 
 /// Searches every member and combines the results per window.
+///
+/// ```
+/// use wint::{Comparison, Constraint, Ensemble, EnsembleSearch, Member, Metric, Observation, Plan, Series};
+///
+/// const HOUR: i64 = 3_600_000;
+/// let member = |name: &str, winds: [f64; 2]| Member {
+///     name: name.into(),
+///     series: Series::new(HOUR, vec![
+///         Observation::at(0).with("wind", winds[0]),
+///         Observation::at(HOUR).with("wind", winds[1]),
+///     ]).unwrap(),
+/// };
+/// // Three versions of one forecast: all agree on hour 0, only two fit hour 1.
+/// let ensemble = Ensemble::new(vec![
+///     member("model-a", [10.0, 12.0]),
+///     member("model-b", [11.0, 15.0]),
+///     member("model-c", [9.0, 30.0]),
+/// ]).unwrap();
+/// let plan = Plan::single_stage("flight", HOUR, vec![
+///     Constraint::hard("safe wind", Metric::new("wind"), Comparison::LessThanOrEqual, 20.0),
+/// ]);
+///
+/// let result = EnsembleSearch::new(&ensemble, &plan).run().unwrap();
+/// let best = &result.windows[0];
+/// assert_eq!((best.start_ms, best.feasible, best.members_total), (0, 3, 3));
+/// assert!(best.meets_requirement);
+/// // Hour 1 fits in 2 of 3 members. That is agreement, not a probability.
+/// let second = &result.windows[1];
+/// assert_eq!((second.feasible, second.infeasible), (2, 1));
+/// assert!(!second.meets_requirement); // the default asks for every answering member
+/// ```
 pub struct EnsembleSearch<'a> {
     ensemble: &'a Ensemble,
     plan: &'a Plan,

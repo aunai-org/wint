@@ -109,6 +109,32 @@ impl Default for SearchResult {
         }
     }
 }
+/// Slides the plan along the series and sorts every start into feasible (best first) or rejected
+/// (with the first rule that failed). Results are data; see [`present`](crate::present) for
+/// wording.
+///
+/// ```
+/// use wint::{Comparison, Constraint, Metric, Observation, Plan, Preference, Series, WindowSearch};
+///
+/// const HOUR: i64 = 3_600_000;
+/// let series = Series::new(HOUR, vec![
+///     Observation::at(0).with("wind", 14.0),
+///     Observation::at(HOUR).with("wind", 6.0),
+///     Observation::at(2 * HOUR).with("wind", 30.0),
+/// ]).unwrap();
+/// let plan = Plan::single_stage("flight", HOUR, vec![
+///     Constraint::hard("safe wind", Metric::new("wind"), Comparison::LessThanOrEqual, 20.0),
+///     Constraint::soft("calm", Metric::new("wind"), Preference::Minimize { ideal: 0.0, scale: 20.0 }, 1.0),
+/// ]);
+///
+/// let result = WindowSearch::new(&series, &plan).run().unwrap();
+/// // Both calm-enough hours fit; the calmer one ranks first.
+/// assert_eq!(result.feasible[0].start_ms, HOUR);
+/// assert_eq!(result.feasible[1].start_ms, 0);
+/// // The windy hour is rejected, and the failure says which reading broke which rule.
+/// assert_eq!(result.rejected[0].start_ms, 2 * HOUR);
+/// assert_eq!(result.rejected[0].failure.actual, Some(30.0));
+/// ```
 pub struct WindowSearch<'a> {
     series: &'a Series,
     plan: &'a Plan,
