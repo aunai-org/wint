@@ -142,6 +142,17 @@ pub fn parse_days(text: &str) -> Result<Vec<Weekday>, ScheduleError> {
         .collect())
 }
 
+/// A local time-of-day window, optionally limited to some weekdays, that a stage must fit inside.
+///
+/// ```
+/// use wint::{Schedule, Weekday};
+///
+/// let mornings = Schedule::parse("09:00", "12:00").unwrap();
+/// let weekend_mornings = mornings.with_days([Weekday::Sat, Weekday::Sun]).unwrap();
+/// assert_eq!(weekend_mornings.days(), vec![Weekday::Sat, Weekday::Sun]);
+/// assert!(Schedule::parse("20:00", "06:00").is_ok()); // wraps past midnight
+/// assert!(Schedule::parse("09:00", "09:00").is_err()); // an empty window is refused
+/// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(

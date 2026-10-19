@@ -3,6 +3,14 @@ use crate::units::{canonical_unit, Unit, UnitError};
 use std::collections::BTreeMap;
 use std::fmt;
 
+/// One sample: a timestamp (Unix milliseconds) and named numbers.
+///
+/// ```
+/// use wint::Observation;
+///
+/// let sample = Observation::at(3_600_000).with("wind", 12.0).with("temperature", 18.5);
+/// assert_eq!(sample.values["wind"], 12.0);
+/// ```
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 pub struct Observation {
@@ -88,6 +96,22 @@ pub enum Preference {
     Range { min: f64, max: f64, scale: f64 },
 }
 
+/// A rule on one metric. A hard constraint must hold at every sample of a stage; a soft one only
+/// affects how windows are ranked.
+///
+/// ```
+/// use wint::{Comparison, Constraint, Metric, Preference};
+///
+/// let hard = Constraint::hard("safe wind", Metric::new("wind"), Comparison::LessThanOrEqual, 20.0);
+/// let soft = Constraint::soft(
+///     "calm is better",
+///     Metric::new("wind"),
+///     Preference::Minimize { ideal: 5.0, scale: 15.0 },
+///     1.0,
+/// );
+/// assert_eq!(hard.name(), "safe wind");
+/// assert_eq!(soft.name(), "calm is better");
+/// ```
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "json", serde(tag = "type", rename_all = "snake_case"))]
@@ -342,6 +366,19 @@ impl Gap {
     }
 }
 
+/// One step of a plan: how long it lasts, the constraints that apply during it, and optionally a
+/// wait before it ([`Gap`]) or a local time-of-day window ([`Schedule`]).
+///
+/// ```
+/// use wint::{Comparison, Constraint, Metric, Stage};
+///
+/// const HOUR: i64 = 3_600_000;
+/// let bake = Stage::new("bake", HOUR, vec![
+///     Constraint::hard("oven free", Metric::new("oven_free"), Comparison::Equal, 1.0),
+/// ])
+/// .with_gap(2 * HOUR, 4 * HOUR); // starts 2 to 4 hours after the previous stage ends
+/// assert_eq!(bake.gap.unwrap().min_ms, 2 * HOUR);
+/// ```
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 pub struct Stage {
@@ -396,6 +433,22 @@ fn check_offset(minutes: i32) -> Result<(), ValidationError> {
 /// Upper bound on the ways the gap ranges of one plan can lay out a window (their product).
 pub const MAX_ARRANGEMENTS: u64 = 10_000;
 
+/// What has to be true, stage by stage, for a job to run.
+///
+/// ```
+/// use wint::{Comparison, Constraint, Metric, Plan, Stage};
+///
+/// const HOUR: i64 = 3_600_000;
+/// let dry = |name: &str| vec![
+///     Constraint::hard(name, Metric::new("rain_probability"), Comparison::LessThan, 20.0),
+/// ];
+/// let plan = Plan::new("paint", vec![
+///     Stage::new("coat", HOUR, dry("dry for coat")),
+///     Stage::new("cure", 2 * HOUR, dry("dry for cure")).with_gap(HOUR, HOUR),
+/// ]);
+/// assert_eq!(plan.duration_ms(), 3 * HOUR);   // time spent in stages
+/// assert_eq!(plan.min_span_ms(), 4 * HOUR);   // including the shortest wait
+/// ```
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 pub struct Plan {
@@ -482,6 +535,24 @@ impl Plan {
     }
 }
 
+/// Readings on a regular grid. [`Series::new`] checks the data, so a search never sees an
+/// irregular or unsorted series.
+///
+/// ```
+/// use wint::{Observation, Series, ValidationError};
+///
+/// const HOUR: i64 = 3_600_000;
+/// let series = Series::new(HOUR, vec![
+///     Observation::at(0).with("wind", 12.0),
+///     Observation::at(HOUR).with("wind", 15.0),
+/// ]);
+/// assert!(series.is_ok());
+///
+/// // A sample off the grid is refused.
+/// let uneven = Series::new(HOUR, vec![Observation::at(0), Observation::at(HOUR + 1)]);
+/// assert!(uneven.is_err());
+/// assert_eq!(Series::new(0, vec![]), Err(ValidationError::NonPositiveCadence));
+/// ```
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "json", serde(try_from = "SeriesData"))]
