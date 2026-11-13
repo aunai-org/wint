@@ -95,6 +95,43 @@ cargo run --features json -- --plan examples/domains/bakery-batch/plan.json --se
 
 Only 6 start times work. Mixing at 05:00 is rejected for a reason that is easy to miss: the room is fine, but the oven is busy at every allowed bake time (08:00 to 10:00), so no bake slot exists. That is the kind of explanation the engine is for.
 
+## Greenhouse watering (`examples/domains/greenhouse-watering`)
+
+*Water for 1 hour in the morning (05:00 to 10:00), only when the tank holds at least 25% and the greenhouse is at most 30 °C; prefer watering before the sun is strong.*
+
+Data: tank level, greenhouse temperature and sunlight (W/m²) per hour for 2 days. On Monday the tank is nearly empty until it is refilled at 07:00; Tuesday is a hot day.
+
+```sh
+cargo run --features json -- --plan examples/domains/greenhouse-watering/plan.json --series examples/domains/greenhouse-watering/series.csv --format csv --top 1
+```
+
+```text
+#1 2026-10-06T05:00Z -> 2026-10-06T06:00Z  suitability 1.00
+   - water/tank has water: 80 at 2026-10-06T05:00Z (expected >= 25)
+   - water/not too hot: 17 at 2026-10-06T05:00Z (expected <= 30)
+   - water/before strong sun: 0 at 2026-10-06T05:00Z (expected minimize: ideal 0, scale 400)
+```
+
+7 start times fit, 41 do not. Monday at 05:00 and 06:00 fail `tank has water`, and Tuesday at 09:00 fails `not too hot` (31 °C). The soft preference ranks the dark early hours first, so Monday's first good start (07:00, after the refill) comes third.
+
+## Pool heating before a swim (`examples/domains/pool-heating`)
+
+*Heat the pool for 3 hours when the air is at least 12 °C (the heat pump works poorly in the cold), preferring solar surplus; then swim for 2 hours between 16:00 and 21:00, starting at most 2 hours after heating ends, when it is dry.*
+
+Data: air temperature, solar surplus (kW) and rain (mm) per hour for 2 days. Monday rains from 17:00 to 20:00; Tuesday is dry and warmer. The swim stage has a **gap** of 0 to 2 hours.
+
+```sh
+cargo run --features json -- --plan examples/domains/pool-heating/plan.json --series examples/domains/pool-heating/series.csv --format csv --top 1
+```
+
+```text
+#1 2026-10-06T11:00Z -> 2026-10-06T18:00Z  suitability 1.00
+   heat         2026-10-06T11:00Z -> 2026-10-06T14:00Z  suitability 1.00
+   swim         2026-10-06T16:00Z -> 2026-10-06T18:00Z  suitability 1.00  wait 2 h
+```
+
+6 start times fit, all on Tuesday (11:00 to 16:00). On Monday heating at 13:00 is fine, but every swim slot it could lead to is rained on, so the window is rejected with `swim/dry`; the stage that failed is named, not just the start time.
+
 ## Using your own data
 
 1. Put your readings in a CSV: first column a timestamp (ISO 8601 with a zone, or Unix seconds), then one column per metric, evenly spaced, with numbers in it (a yes/no flag is 0 or 1). Name the metrics whatever you like.

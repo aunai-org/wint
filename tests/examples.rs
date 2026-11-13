@@ -64,3 +64,50 @@ fn bakery_batch_waits_between_mixing_and_baking() {
     assert_eq!(five.failure.stage, "bake");
     assert_eq!(five.failure.constraint, "oven free");
 }
+
+#[test]
+fn greenhouse_watering_waits_for_the_tank_and_avoids_heat() {
+    let (series, result) = run("greenhouse-watering");
+    assert_eq!((result.feasible.len(), result.rejected.len()), (7, 41));
+    // Every feasible start is in the 05:00-10:00 morning window.
+    assert!(result
+        .feasible
+        .iter()
+        .all(|w| (5..=9).contains(&hour(w.start_ms))));
+    // Tuesday 05:00 wins: no sun yet, so the soft preference is perfect.
+    let best = &result.feasible[0];
+    assert_eq!(best.start_ms, series.observations[29].timestamp_ms);
+    assert_eq!(best.suitability, 1.0);
+    // Monday before the 07:00 refill fails on the tank; Tuesday 09:00 is too hot (31 C).
+    let failure = |row: usize| {
+        let at = series.observations[row].timestamp_ms;
+        let r = result.rejected.iter().find(|r| r.start_ms == at).unwrap();
+        r.failure.constraint.as_str()
+    };
+    assert_eq!(failure(5), "tank has water");
+    assert_eq!(failure(6), "tank has water");
+    assert_eq!(failure(33), "not too hot");
+}
+
+#[test]
+fn pool_heating_needs_a_dry_evening_for_the_swim() {
+    let (series, result) = run("pool-heating");
+    assert_eq!((result.feasible.len(), result.rejected.len()), (6, 38));
+    // All feasible starts are on Tuesday, 11:00 to 16:00.
+    let tuesday = series.observations[24].timestamp_ms;
+    assert!(result
+        .feasible
+        .iter()
+        .all(|w| w.start_ms >= tuesday && (11..=16).contains(&hour(w.start_ms))));
+    let best = &result.feasible[0];
+    assert_eq!(best.start_ms, series.observations[35].timestamp_ms); // heat at 11:00
+    assert_eq!(best.stages[1].gap_ms, 2 * H); // swim at 16:00
+                                              // Heating on Monday at 13:00 is fine, but the rain rules out every swim slot it can reach.
+    let monday_13 = result
+        .rejected
+        .iter()
+        .find(|r| r.start_ms == series.observations[13].timestamp_ms)
+        .unwrap();
+    assert_eq!(monday_13.failure.stage, "swim");
+    assert_eq!(monday_13.failure.constraint, "dry");
+}

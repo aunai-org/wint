@@ -1,0 +1,39 @@
+{
+  "name": "greenhouse-watering",
+  "stages": [
+    {
+      "name": "water",
+      "duration_ms": 3600000,
+      "schedule": {
+        "from": "05:00",
+        "to": "10:00"
+      },
+      "constraints": [
+        {
+          "type": "hard",
+          "name": "tank has water",
+          "metric": "tank_level_pct",
+          "comparison": ">=",
+          "threshold": 25
+        },
+        {
+          "type": "hard",
+          "name": "not too hot",
+          "metric": "greenhouse_temp_c",
+          "comparison": "<=",
+          "threshold": 30
+        },
+        {
+          "type": "soft",
+          "name": "before strong sun",
+          "metric": "solar_w_m2",
+          "preference": {
+            "kind": "minimize",
+            "ideal": 0,
+            "scale": 400
+          }
+        }
+      ]
+    }
+  ]
+}
