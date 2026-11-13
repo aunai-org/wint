@@ -75,7 +75,7 @@ Small, well-defined next steps. A daily routine takes the first unchecked `agent
 - [x] [wint] Property tests (`proptest`): a feasible window always satisfies every hard constraint, and every rejected window names a real failure
 - [ ] [wint-demo] A chart panel for `==` limits (flags such as `oven_free`), so every hard rule on the page has a picture
 - [x] [wint] Rustdoc examples (doc tests) on the main public types, so docs.rs shows runnable code
-- [ ] [wint] Two more examples from other fields (for example greenhouse watering, pool heating) in `docs/EXAMPLES.md`, each with a test that pins its numbers
+- [x] [wint] Two more examples from other fields (for example greenhouse watering, pool heating) in `docs/EXAMPLES.md`, each with a test that pins its numbers
 - [ ] [wint-demo] Accessibility pass: keyboard use, labels and contrast, with end-to-end checks
 - [ ] [wint] Formal JSON Schema files for plan and result, checked against the golden files by a test
 - [ ] [wint] Open-Meteo local offsets per sample, so a forecast that crosses a clock change keeps the right local time. Start with a short design note in the pull request if the change is large

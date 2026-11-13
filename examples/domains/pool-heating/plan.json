@@ -1,0 +1,49 @@
+{
+  "name": "pool-heating",
+  "stages": [
+    {
+      "name": "heat",
+      "duration_ms": 10800000,
+      "constraints": [
+        {
+          "type": "hard",
+          "name": "warm enough air",
+          "metric": "air_temp_c",
+          "comparison": ">=",
+          "threshold": 12
+        },
+        {
+          "type": "soft",
+          "name": "solar surplus",
+          "metric": "solar_surplus_kw",
+          "preference": {
+            "kind": "maximize",
+            "ideal": 3,
+            "scale": 3
+          }
+        }
+      ]
+    },
+    {
+      "name": "swim",
+      "duration_ms": 7200000,
+      "gap": {
+        "min_ms": 0,
+        "max_ms": 7200000
+      },
+      "schedule": {
+        "from": "16:00",
+        "to": "21:00"
+      },
+      "constraints": [
+        {
+          "type": "hard",
+          "name": "dry",
+          "metric": "rain_mm",
+          "comparison": "<=",
+          "threshold": 0.2
+        }
+      ]
+    }
+  ]
+}
